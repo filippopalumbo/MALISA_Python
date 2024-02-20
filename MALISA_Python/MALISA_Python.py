@@ -15,7 +15,11 @@ from matplotlib.animation import FuncAnimation
 # num_cols = 28
 
 # Dimensions of BOTH sensor mats on the floor
-num_rows = 160
+# num_rows = 160
+# num_cols = 28
+
+# Dimensions of both sensor mats and the chair
+num_rows = 180
 num_cols = 28
 
 # Initialize the plot for visualization
@@ -27,13 +31,13 @@ cop_marker, = ax.plot([], [], 'bo')  # Blue circle marker for CoP
 
 # Replace with your CSV file path
 # file_path = 'DS_TUG_Floor1'
-file_path = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/MALISA_Python/DS_TUG_Floor1'
-file_path_merged = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/merged_data.csv'
+# file_path = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/MALISA_Python/DS_TUG_Floor1' 
+file_path = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/merged_data.csv'
 
 # Read the CSV file
 # data = pd.read_csv(file_path)
 # Merged data 
-data = pd.read_csv(file_path_merged)
+data = pd.read_csv(file_path)
 
 def calculate_cop(matrix):
     """Calculate the Center of Pressure (CoP) of the pressure matrix."""
@@ -84,4 +88,4 @@ for index, row in data.iterrows():
     fig.canvas.flush_events()
 
     # Sleep time controls the update rate of the visualization
-    time.sleep(0.1)
+    time.sleep(0.001)
