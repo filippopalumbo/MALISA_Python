@@ -4,6 +4,41 @@ import matplotlib.pyplot as plt
 import time
 from matplotlib.animation import FuncAnimation
 
+#### SETUP ####
+
+# Dimensions of the sensor mat on the chair
+# num_rows = 20
+# num_cols = 20
+
+# Dimensions of the sensor mat on the floor
+# num_rows = 80
+# num_cols = 28
+
+# Dimensions of BOTH sensor mats on the floor
+# num_rows = 160
+# num_cols = 28
+
+# Dimensions of both sensor mats and the chair
+num_rows = 180
+num_cols = 28
+
+# Initialize the plot for visualization
+plt.ion()
+fig, ax = plt.subplots()
+heatmap = ax.imshow(np.zeros((num_rows, num_cols)), cmap='hot', interpolation='nearest', vmin=0, vmax=2000)
+
+cop_marker, = ax.plot([], [], 'bo')  # Blue circle marker for CoP
+
+# Replace with your CSV file path
+# file_path = 'DS_TUG_Floor1'
+# file_path = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/MALISA_Python/DS_TUG_Floor1' 
+file_path = '/Users/heddaeriksson/Documents/GitHub/MALISA_Python/merged_data.csv'
+
+# Read the CSV file
+# data = pd.read_csv(file_path)
+# Merged data 
+data = pd.read_csv(file_path)
+
 def calculate_cop(matrix):
     """Calculate the Center of Pressure (CoP) of the pressure matrix."""
     total_pressure = matrix.sum()
@@ -17,28 +52,6 @@ def calculate_cop(matrix):
     y_cop = (y_coords * matrix).sum() / total_pressure
 
     return x_cop, y_cop
-
-# Replace with your CSV file path
-# file_path = 'DS_TUG_Floor1'
-file_path = 'DS_TUG_Floor1'
-
-# Read the CSV file
-data = pd.read_csv(file_path)
-
-# Dimensions of the sensor mat on the chair
-# num_rows = 20
-# num_cols = 20
-
-# Dimensions of the sensor mat on the floor
-num_rows = 80
-num_cols = 28
-
-# Initialize the plot for visualization
-plt.ion()
-fig, ax = plt.subplots()
-heatmap = ax.imshow(np.zeros((num_rows, num_cols)), cmap='hot', interpolation='nearest', vmin=0, vmax=2000)
-
-cop_marker, = ax.plot([], [], 'bo')  # Blue circle marker for CoP
 
 # Code to save the animation as video
 ## Function to update the figure for each frame
@@ -75,4 +88,4 @@ for index, row in data.iterrows():
     fig.canvas.flush_events()
 
     # Sleep time controls the update rate of the visualization
-    time.sleep(0.1)
+    time.sleep(0.001)
