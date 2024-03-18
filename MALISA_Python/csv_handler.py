@@ -16,10 +16,17 @@ def create_unique_filepath(initials):
 
     return filepath
 
+# Events:
+# l-heel, l-foot, l-toe
+# r-heel, r-foot, r-toe
+# stand, sit
+# walk1, walk2, turn1, turn2
+
 def create_csv_file(filepath):
     # Create a new csv file containg data from test and person 
     # maybe generate a unique ID for each file? 
     # Define CSV file headers
+    # | timestamp | event | COP x | COP y | total pressure | total area | 
     headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure", "total_area"]  
     
     if os.path.exists(filepath):
@@ -29,7 +36,7 @@ def create_csv_file(filepath):
         writer = csv.writer(file)
         writer.writerow(headers)
 
-    print("Data written to CSV file successfully")
+    print("CSV file successfully created")
     
 
 def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure, total_area ):
