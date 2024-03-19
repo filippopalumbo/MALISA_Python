@@ -47,8 +47,16 @@ def main():
         frames.append(df[i, :, :])
 
     cop_x, cop_y = calc_cop(frames)
+    area = calc_area(frames)
+    tot_pressure = calc_total_pressure(frames)
+    max_pressure, mp_index = find_max_pressure(frames)
+    # Format the max_index for display
+    if mp_index is not None:
+        max_index_str = f"[{mp_index[0]},{mp_index[1]}]"
+    else:
+        max_index_str = "[N/A,N/A]"
 
-    info = [('cop X', cop_x),('cop Y', cop_y)]
+    info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('index of max p', mp_index)]
     info = pd.DataFrame(info, columns=['Metric', 'Value'])
     st.table(info)
 
