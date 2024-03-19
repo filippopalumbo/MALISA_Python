@@ -1,36 +1,49 @@
 import numpy as np
+import pandas as pd
 
 def calc_total_pressure(dfs):
+    total_pressure = 0
     for df in dfs:
-        total_pressure += df 
+        total_pressure += df.sum() 
     
     return total_pressure
 
 def find_max_pressure(dfs):
-    max_pressure = 0 # Initialize with negative infinity to ensure any value will be greater
-    
-    for df in dfs:
-        max_in_df = df.max().max()  # Find the maximum value in the current DataFrame
-        if max_in_df > max_pressure:
-            max_pressure = max_in_df  # Update max_pressure if a greater value is found
-            max_index = df.stack().idxmax() # Index of max_pressure sensor
+    max_pressure = 0
+    current_max = 0
+    indices = 0
+    max_index = None
 
+    for df in dfs:
+        current_max = df.max() # Find the maximum value in the current DataFrame
+        if current_max > max_pressure:
+            max_pressure = current_max  # Update max_pressure if a greater value is found
+            indices = np.where(df == max_pressure) # Find the indices where the value occurs in the DataFrame
+            max_index = (indices[0][0], indices[1][0])
+    
+    # # Format the max_index for display
+    # if mp_index is not None:
+    #     max_index_str = f"[{mp_index[0]},{mp_index[1]}]"
+    # else:
+    #     max_index_str = "[N/A,N/A]"
+            
     return max_pressure, max_index
 
 def calc_area(dfs):
     area = 0  # Initialize area
-    
+
     # Calculate the area of sensor elements showing pressure
     for df in dfs:
         # Count the number of sensor elements with pressure > 0
-        num_sensors_with_pressure = np.count_nonzero(df)
-        # Assuming each sensor element has a size of 10 mm
-        area += num_sensors_with_pressure * 10
+        area += np.count_nonzero(df)
+
+    # # Convert to actual area for the feets 
+    # # Each sensor element has a size of 10 mm
+    # area += (num_sensors_with_pressure * 10)
+    # # Convert area from m^2 to cm^2
+    # area_cm2 = (area / 100)
     
-    # Convert area from mm^2 to cm^2
-    area_cm2 = area / 100
-    
-    return area_cm2
+    return area
 
 def calc_cop(frames):
     cop_x = 0
