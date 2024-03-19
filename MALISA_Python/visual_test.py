@@ -36,11 +36,11 @@ def main():
 
     dfs = load_files([file_path_mat1, file_path_mat2])
     
-    # clear data of values below treshold
+    # Clear data of values below treshold
     for df in dfs:
         df[df < 400] = 0
 
-    i = st.slider('Choose frame', 1, len(dfs[0])-1)
+    i = st.slider('Choose frame', 0, len(dfs[0])-1)
     
     frames = []
     for df in dfs:
@@ -57,8 +57,6 @@ def main():
 
     # Add each heatmap to the corresponding subplot
     for i, frame in enumerate(frames, start=1):
-       # if i == 2:
-        #    frame = np.rot90(frame, 2)
         heatmap_trace = go.Heatmap(z=frame, zmin=0, zmax=2500, colorscale='Plasma')
         fig.add_trace(heatmap_trace, row=1, col=i)
 
