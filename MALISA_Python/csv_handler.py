@@ -75,6 +75,6 @@ def get_event_data(filepath, event):
         
 # Example usage for function "write_to_csv":
 # file_path = "tug_test_DS_date"
-filepath = create_unique_filepath("DS")
-write_to_csv(filepath, "2023-10-27 15:02:16.200000+02:00", "Walk1", 1, 1, 6000, 50)
-print(filepath)
+# filepath = create_unique_filepath("DS")
+# write_to_csv(filepath, "2023-10-27 15:02:16.200000+02:00", "Walk1", 1, 1, 6000, 50)
+# print(filepath)
