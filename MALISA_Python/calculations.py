@@ -70,10 +70,7 @@ def calc_cop(frames):
             cop_y += (np.sum(frame * indices_y) / total_pressure_frame)
     
     return int(np.round(cop_x)), int(np.round(cop_y))
-
-
-# ToDo
-# add calculations for first y to last y -> disticntfoot 
+ 
 def calc_y_distance(frames):
     total_pressure = 0
 
@@ -87,10 +84,32 @@ def calc_y_distance(frames):
     elif (total_pressure_frame2 > 0 and total_pressure_frame1 == 0):
         return calc_y_distance_single_frame(frames[1])
     elif (total_pressure_frame1 > 0 and total_pressure_frame2 > 0):
-        #TODO
-        return 0
+        return (calc_y_distance_double_frame(frames[0], frames[1]))
     return 0
+
+def calc_y_distance_double_frame(frame1, frame2):
+    distance_y = 0
+    nonzero_coords_frame1 = np.transpose(np.nonzero(frame1))
+    nonzero_coords_frame2 = np.transpose(np.nonzero(frame2))
+
+    # Find coordinate at mat1 value > 0 
+    if len(nonzero_coords_frame1) > 0:
+        mat1_coord = tuple(nonzero_coords_frame1[-1])
+    # Find coordinate at mat2 value > 0 
+    if len(nonzero_coords_frame2) > 0:
+        mat2_coord = tuple(nonzero_coords_frame2[-1])
+    if len(nonzero_coords_frame1) <= 0:
+        mat1_coord = None
+    if len(nonzero_coords_frame2) <= 0:
+        mat1_coord = None
     
+    # In this case both mat will be pending from zero, which means that the coordinate will be each mat's 
+    # diff and one can just add the number together
+    if mat1_coord is not None and mat2_coord is not None:
+        distance_y = (mat1_coord[0] + mat2_coord[0])
+    
+    return distance_y
+
 def calc_y_distance_single_frame(frame):
     distance_y = 0
     #distance_x = 0

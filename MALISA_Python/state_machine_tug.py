@@ -2,6 +2,8 @@ import pandas as pd
 from calculations import *
 from enum import Enum, auto
 from MALISA_Python.enum.tug_states import Tug_State
+from MALISA_Python.enum.tug_events import *
+
 
 def load_files(file_paths):
     dfs = []
@@ -26,6 +28,34 @@ def on_turn(metrics, turn_nr):
 
 def on_sit(metrics):
     return 0
+
+def estimate_direction(walk, mat, cop_x):
+
+    if (walk == Tug_Event.walk1 and mat == 1):
+        if cop_x >= 14:
+            return Direction.left
+        elif cop_x < 14:
+            return Direction.right
+                
+    elif (walk == Tug_Event.walk1 and mat == 2):
+        if cop_x >= 14:
+            return Direction.right
+        elif cop_x < 14:
+            return Direction.left
+        
+    elif (walk == Tug_Event.walk2 and mat == 2):
+        if cop_x < 14:
+            return Direction.right
+        elif cop_x >= 14:
+            return Direction.left
+                
+    elif (walk == Tug_Event.walk2 and mat == 1):
+        if cop_x < 14:
+            return Direction.left
+        elif cop_x >= 14:
+            return Direction.right
+    
+    return None
 
 def calculate_metrics(frames):
     metrics = {}

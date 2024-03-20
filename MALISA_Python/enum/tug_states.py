@@ -8,6 +8,6 @@ class Tug_State(Enum):
     walk2 = auto()
     turn2 = auto()
     sit = auto()
-    #heel = auto()
-    #foot = auto()
+    heel = auto()
+    foot = auto()
     #toe = auto()
