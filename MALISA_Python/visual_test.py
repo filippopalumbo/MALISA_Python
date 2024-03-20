@@ -8,13 +8,18 @@ from calculations import *
 @st.cache_resource(
     show_spinner=" Loading data...",
 )
-def load_files(file_paths):
+def load_files(floor_file_paths, seat_file_path):
     dfs = []
 
-    for file_path in file_paths:
+    for file_path in floor_file_paths:
         df = pd.read_csv(file_path)
+        # Dimensions of floor mat is 80 x 28
         dfs.append(df.iloc[:, 1:].to_numpy().reshape(len(df), 80, 28))
-    
+
+    # Dimensions of seat mat is 20 x 20
+    seat = pd.read_csv(seat_file_path)
+    dfs.append(seat.iloc[:, 1:].to_numpy().reshape(len(df), 20, 20))
+
     return dfs
 
 def main():
@@ -24,20 +29,24 @@ def main():
     if mode == 'test 1':
         file_path_mat1 = 'MALISA_Python/data/tug1_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug1_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug1_seat.csv'
     if mode == 'test 2':
         file_path_mat1 = 'MALISA_Python/data/tug2_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug2_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug2_seat.csv'
     if mode == 'test 3':
         file_path_mat1 = 'MALISA_Python/data/tug3_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug3_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug3_seat.csv'
     if mode == 'test 4':
         file_path_mat1 = 'MALISA_Python/data/tug4_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug4_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug4_seat.csv'
 
-    dfs = load_files([file_path_mat1, file_path_mat2])
+    dfs = load_files([file_path_mat1, file_path_mat2], file_path_seat)
     
-    # Clear data of values below treshold
-    for df in dfs:
+    # Clear data of values below threshold for the first two DataFrames in dfs (aka the floor mats)
+    for df in dfs[:-1]:
         df[df < 400] = 0
 
     i = st.slider('Choose frame', 0, len(dfs[0])-1)
@@ -46,20 +55,22 @@ def main():
     for df in dfs:
         frames.append(df[i, :, :])
 
-    cop_x, cop_y = calc_cop(frames)
-    y_distance = calc_y_distance(frames)
-    area = calc_area(frames)
-    tot_pressure = calc_total_pressure(frames)
-    max_pressure, mp_index = find_max_pressure(frames)
-    # Format the max_index for display
-    if mp_index is not None:
-        max_index_str = f"[{mp_index[0]},{mp_index[1]}]"
-    else:
-        max_index_str = "[N/A,N/A]"
+    cop_x, cop_y = calc_cop(frames[:-1])
+    y_distance = calc_y_distance(frames[:-1])
+    area = calc_area(frames[:-1])
+    tot_pressure = calc_total_pressure(frames[:-1])
+    max_pressure = find_max_pressure(frames[:-1])
 
-    info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('index of max p', mp_index), ('y-distance', y_distance)]
-    info = pd.DataFrame(info, columns=['Metric', 'Value'])
-    st.table(info)
+
+    floor_info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('y-distance', y_distance)]
+    floor_info = pd.DataFrame(floor_info, columns=['Floor Metric', 'Value'])
+    st.table(floor_info)
+
+    tot_pressure = calc_total_pressure(frames[-1])
+    max_pressure = find_max_pressure(frames[-1])
+    seat_info = [('total pressure', tot_pressure), ('max pressure', max_pressure)]
+    seat_info = pd.DataFrame(seat_info, columns=['Seat Metric', 'Value'])
+    st.table(seat_info)
 
     # Create subplots with one row and the number of columns equal to the number of frames
     fig = make_subplots(rows=1, cols=len(frames))

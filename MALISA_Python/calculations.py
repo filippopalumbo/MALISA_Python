@@ -18,16 +18,16 @@ def find_max_pressure(frames):
         current_max = frame.max() # Find the maximum value in the current DataFrame
         if current_max > max_pressure:
             max_pressure = current_max  # Update max_pressure if a greater value is found
-            indices = np.where(frame == max_pressure) # Find the indices where the value occurs in the DataFrame
-            max_index = (indices[0][0], indices[1][0])
+            #indices = np.where(frame == max_pressure) # Find the indices where the value occurs in the DataFrame
+            #max_index = (indices[0][0], indices[1][0])
     
-    # # Format the max_index for display
+     # Format the max_index for display
     # if mp_index is not None:
     #     max_index_str = f"[{mp_index[0]},{mp_index[1]}]"
     # else:
     #     max_index_str = "[N/A,N/A]"
             
-    return max_pressure, max_index
+    return max_pressure
 
 def calc_area(frames):
     area = 0  # Initialize area
