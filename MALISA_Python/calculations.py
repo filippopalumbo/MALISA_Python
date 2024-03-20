@@ -86,7 +86,9 @@ def calc_y_distance(frames):
         return calc_y_distance_single_frame(frames[0])
     elif (total_pressure_frame2 > 0 and total_pressure_frame1 == 0):
         return calc_y_distance_single_frame(frames[1])
-
+    elif (total_pressure_frame1 > 0 and total_pressure_frame2 > 0):
+        #TODO
+        return 0
     return 0
     
 def calc_y_distance_single_frame(frame):
@@ -114,3 +116,5 @@ def calc_y_distance_single_frame(frame):
         #distance_x = abs(last_coord[1] - first_coord[1])
 
     return distance_y
+
+
