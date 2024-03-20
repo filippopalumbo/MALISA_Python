@@ -1,18 +1,7 @@
 import pandas as pd
 from calculations import *
 from enum import Enum, auto
-
-class State(Enum):
-    prep = auto()
-    stand = auto()
-    walk1 = auto()
-    turn1 = auto()
-    walk2 = auto()
-    turn2 = auto()
-    sit = auto()
-    #heel = auto()
-    #foot = auto()
-    #toe = auto()
+from MALISA_Python.enum.tug_states import Tug_State
 
 def load_files(file_paths):
     dfs = []
@@ -60,8 +49,9 @@ def calculate_metrics(frames):
 def main():
     mat1, mat2 = load_files(["MALISA_Python/data/tug1_mat1.csv", "MALISA_Python/data/tug1_mat2.csv"])
 
-    current_state = State.prep
     index = 0
+    current_state = Tug_State.prep
+
 
     while index < len(mat1):
         frame1 = mat1[index, :, :]
@@ -74,25 +64,26 @@ def main():
         # cop_x = metrics_hash_table['cop_x'])  
 
         match current_state:
-            case State.prep:
+
+            case Tug_State.prep:
                 next_state = on_prep(metrics)
 
-            case State.stand:
+            case Tug_State.stand:
                 next_state = on_stand(metrics)
 
-            case State.walk1:
+            case Tug_State.walk1:
                 next_state = on_walk(metrics, 1)
 
-            case State.turn1:
+            case Tug_State.turn1:
                 next_state = on_turn(metrics, 1)
 
-            case State.walk2:
+            case Tug_State.walk2:
                 next_state = on_walk(metrics, 2)
 
-            case State.turn2:
+            case Tug_State.turn2:
                 next_state = on_turn(metrics, 2)   
             
-            case State.sit:
+            case Tug_State.sit:
                 next_state = on_sit(metrics)
         
         current_state = next_state

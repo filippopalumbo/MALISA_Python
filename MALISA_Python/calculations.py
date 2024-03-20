@@ -1,24 +1,24 @@
 import numpy as np
 import pandas as pd
 
-def calc_total_pressure(dfs):
+def calc_total_pressure(frames):
     total_pressure = 0
-    for df in dfs:
-        total_pressure += df.sum() 
+    for frame in frames:
+        total_pressure += frame.sum() 
     
     return total_pressure
 
-def find_max_pressure(dfs):
+def find_max_pressure(frames):
     max_pressure = 0
     current_max = 0
     indices = 0
     max_index = None
 
-    for df in dfs:
-        current_max = df.max() # Find the maximum value in the current DataFrame
+    for frame in frames:
+        current_max = frame.max() # Find the maximum value in the current DataFrame
         if current_max > max_pressure:
             max_pressure = current_max  # Update max_pressure if a greater value is found
-            indices = np.where(df == max_pressure) # Find the indices where the value occurs in the DataFrame
+            indices = np.where(frame == max_pressure) # Find the indices where the value occurs in the DataFrame
             max_index = (indices[0][0], indices[1][0])
     
     # # Format the max_index for display
@@ -29,13 +29,13 @@ def find_max_pressure(dfs):
             
     return max_pressure, max_index
 
-def calc_area(dfs):
+def calc_area(frames):
     area = 0  # Initialize area
 
     # Calculate the area of sensor elements showing pressure
-    for df in dfs:
+    for frame in frames:
         # Count the number of sensor elements with pressure > 0
-        area += np.count_nonzero(df)
+        area += np.count_nonzero(frame)
 
     # # Convert to actual area for the feets 
     # # Each sensor element has a size of 10 mm
@@ -72,4 +72,45 @@ def calc_cop(frames):
     return int(np.round(cop_x)), int(np.round(cop_y))
 
 
+# ToDo
+# add calculations for first y to last y -> disticntfoot 
+def calc_y_distance(frames):
+    total_pressure = 0
 
+    total_pressure_frame1 = np.sum(frames[0])
+    total_pressure_frame2 = np.sum(frames[1])
+
+    if (total_pressure_frame1 == 0 and total_pressure_frame2 == 0):
+        return total_pressure
+    elif (total_pressure_frame1 > 0 and total_pressure_frame2 == 0):
+        return calc_y_distance_single_frame(frames[0])
+    elif (total_pressure_frame2 > 0 and total_pressure_frame1 == 0):
+        return calc_y_distance_single_frame(frames[1])
+
+    return 0
+    
+def calc_y_distance_single_frame(frame):
+    distance_y = 0
+    #distance_x = 0
+    
+    # find coordinates of the first value > 0
+    nonzero_coords = np.transpose(np.nonzero(frame))
+    if len(nonzero_coords) > 0:
+        first_coord = tuple(nonzero_coords[0])
+    else:
+        first_coord = None
+
+    # find coordinates of the last value > 0
+    if len(nonzero_coords) > 0:
+        last_coord = tuple(nonzero_coords[-1])
+    else:
+        last_coord = None
+    
+    # if both coordinates are found, calculate the distance between coordinates in x- resp. and y-axis
+    if first_coord is not None and last_coord is not None:
+        # calculate distance between coordinates in y-axis
+        distance_y = abs(last_coord[0] - first_coord[0])
+        # calculate distance between coordinates in x-axis
+        #distance_x = abs(last_coord[1] - first_coord[1])
+
+    return distance_y

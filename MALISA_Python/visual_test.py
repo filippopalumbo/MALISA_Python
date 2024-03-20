@@ -47,6 +47,7 @@ def main():
         frames.append(df[i, :, :])
 
     cop_x, cop_y = calc_cop(frames)
+    y_distance = calc_y_distance(frames)
     area = calc_area(frames)
     tot_pressure = calc_total_pressure(frames)
     max_pressure, mp_index = find_max_pressure(frames)
@@ -56,7 +57,7 @@ def main():
     else:
         max_index_str = "[N/A,N/A]"
 
-    info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('index of max p', mp_index)]
+    info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('index of max p', mp_index), ('y-distance', y_distance)]
     info = pd.DataFrame(info, columns=['Metric', 'Value'])
     st.table(info)
 
@@ -65,7 +66,7 @@ def main():
 
     # Add each heatmap to the corresponding subplot
     for i, frame in enumerate(frames, start=1):
-        heatmap_trace = go.Heatmap(z=frame, zmin=0, zmax=2500, colorscale='Plasma')
+        heatmap_trace = go.Heatmap(z=frame, zmin=0, zmax=4095, colorscale='Plasma') # 12 bits gives a resolution of 4096 values, including 0 -> 4095 
         fig.add_trace(heatmap_trace, row=1, col=i)
 
     # Update layout
