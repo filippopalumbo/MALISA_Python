@@ -49,27 +49,37 @@ def synchronize_end_time(df1, df2):
         df2 = df2.iloc[:len(df1)]  # Truncate df2 to match the length of df1
     return df1, df2
 
-@st.cache_resource(
-    show_spinner=" Loading data...",
-)
-def load_file():
+def load_files():
     df1 = read_file('MALISA_Python/data/DS_TUG_Floor1.csv')
     df2 = read_file('MALISA_Python/data/DS_TUG_Floor2.csv')
-    df1, df2 = resample_files([df1, df2])
-    start_time = find_latest_start_time([df1, df2])
-    df1, df2 = syncronize_start_time([df1, df2], start_time = start_time)
+    df3 = read_file('MALISA_Python/data/DS_TUG_Seat2.csv')
+    df1, df2, df3 = resample_files([df1, df2, df3])
+    start_time = find_latest_start_time([df1, df2, df3])
+    df1, df2, df3 = syncronize_start_time([df1, df2, df3], start_time = start_time)
+
+    # Slice the DataFrame using iloc
+    sliced_df = df3.iloc[2770:3000, :]  # Slicing rows x and y, and all columns
+
+    # Save sliced DataFrame to CSV
+    sliced_df.to_csv('tug4_seat.csv', index=True)
+    return df1, df2, df3
+
+    """
+    # To visualize the two floor mats as one single catwalk
     df1, df2 = synchronize_end_time(df1, df2)
     df1 = df1.to_numpy().reshape(len(df1), 80, 28)
     df2 = df2.to_numpy().reshape(len(df2), 80, 28)
+    df3 = df3.to_numpy().reshape(len(df3), 20, 20)
 
      # special handling of floor2, since concat shifts the coordinates
     df2 = np.rot90(df2, 2, (1,2))
-    concat_df = np.concatenate((df2, df1), axis=1)
-    return concat_df
+    concat_df = np.concatenate((df2, df1), axis=1) """
 
 def main():
-
-    data = load_file()
+    df1, df2, df3 = load_files()
+    
+    """
+    data = load_files()
 
     # clear data of values below treshold
     data[data < 400] = 0
@@ -93,6 +103,6 @@ def main():
     fig.layout.height = 1600
     fig.layout.width = 280
     fig.update(layout_showlegend=False)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig)"""
 
 main()
