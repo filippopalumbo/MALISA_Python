@@ -55,14 +55,14 @@ def main():
     for df in dfs:
         frames.append(df[i, :, :])
 
-    cop_x, cop_y = calc_cop(frames[:-1])
+    cop_x, cop_y, cop_mat = calc_cop(frames[:-1])
     y_distance = calc_y_distance(frames[:-1])
     area = calc_area(frames[:-1])
     tot_pressure = calc_total_pressure(frames[:-1])
     max_pressure = find_max_pressure(frames[:-1])
 
 
-    floor_info = [('cop X', cop_x),('cop Y', cop_y), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('y-distance', y_distance)]
+    floor_info = [('cop X', cop_x),('cop Y', cop_y), ('mat', cop_mat), ('tot area', area), ('tot pressure', tot_pressure), ('max pressure', max_pressure), ('y-distance', y_distance)]
     floor_info = pd.DataFrame(floor_info, columns=['Floor Metric', 'Value'])
     st.table(floor_info)
 
