@@ -6,8 +6,12 @@ import streamlit as st
 import plotly.graph_objects as go  
 from plotly.subplots import make_subplots
 
-T_sit_to_stand = 3600
-T_max_pressure = 4000
+# Thresholds
+threshold_seat = 3600
+threshold_heal = 4000
+threshold_y = 60
+y_dis_low = 5
+y_dis_high = 20
 
 def load_seat_file(file_path): 
     df = []
@@ -25,53 +29,132 @@ def load_floor_files(file_paths):
     return dfs
 
 def on_prep(frame):
-    tot_pressure = calc_total_pressure(frame)
-
-    if(tot_pressure < T_sit_to_stand):
-        return Tug_State.stand,0
+    pressure_on_seat = calc_total_pressure(frame)
+    event = {}
+    
+    if(pressure_on_seat < threshold_seat):
+        # If total pressure on seat is below threshold T_sit_to_stand then log event stand
+        event = create_event_table(frame['timestamp'], Tug_Event.stand, 0, 0)
+        return Tug_State.stand, event
     else:
-        return Tug_State.prep,0
+        # Are we logging prep state?
+        return Tug_State.prep 
+
     
 
 def on_stand(metrics):
     current_tot_pressure = metrics['max_pressure']
+    event = {}
 
-    if(current_tot_pressure > T_max_pressure):
-        return Tug_State.walk1,0
+    if(current_tot_pressure > threshold_heal):
+        # If current total pressure is reaching max pressure threshold, 
+        # then logg walk because it indicates first valid heel after standing position
+        event = create_event_table(metrics['timestamp'], Tug_Event.walk1, metrics['cop_x'], metrics['cop_y'])
+        return Tug_State.walk1, event
     else:
-        return Tug_State.stand,0
-    
+        # Else logg that we are still in stand state
+        event = create_event_table(metrics['timestamp'], Tug_Event.stand, metrics['cop_x'], metrics['cop_y'])
+        return Tug_State.stand, event
+
 
 def on_walk(metrics, walk_nr):
-    return 0,0
+    cop_y = metrics['cop_y']
+    event = {}
 
-def on_turn(metrics, turn_nr):
-    return 0,0
+    if(walk_nr == 1):
+        if (cop_y > threshold_y):
+            # Indicates that we are now turning around to start walking back
+            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.turn1, event
+        else:
+            # Still walking, estimate and log heel or foot
+            event = estimate_gait(metrics, walk_nr)
+            return Tug_State.walk1, event
+    elif(walk_nr == 2):
+        # On second walk (walk back)
+        if(cop_y > threshold_y):
+            # Indicates that we are now turning around to evantually sit down
+            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.turn2, event
+        else:
+            # Still walking, estimate and log heel or foot
+            event = estimate_gait(metrics, walk_nr)
+            return Tug_State.walk2, event
+
+
+def on_turn(metrics, frame_seat, turn_nr):
+    cop_y = metrics['cop_y']
+    event = {}
+    pressure_on_seat = calc_total_pressure(frame_seat)
+
+    if(turn_nr == 1):
+        # On first turn
+        if(cop_y < threshold_y):
+            # Indicates that we started walking again after turning
+            event = create_event_table(metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.walk2, event
+        else:
+            # Still turning 
+            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.turn1, event
+    elif(turn_nr == 2):
+        # On second turn
+        if(pressure_on_seat > threshold_seat):
+            # Indicates that we are done turning and now sitting
+            event = create_event_table(metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.sit, event
+        else:
+            # Still turning 
+            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+            return Tug_State.turn1, event
+
+
 
 def on_sit(metrics):
     return 0,0
 
-def estimate_placement(walk, mat, cop_x):
+def estimate_gait(metrics, walk_nr):
+    cop_x = metrics['cop_x']
+    current_max_pressure = metrics['max_pressure']
+    y_dis = metrics['y_distance']
+    mat_nr = metrics['mat']
+    event = {}
+    placement = estimate_placement(walk_nr, mat_nr, cop_x)
 
-    if (walk == Tug_Event.walk1 and mat == 1):
+    if(current_max_pressure > threshold_heal and (y_dis > y_dis_high or y_dis < y_dis_low)):
+        if (placement == Placement.left):
+            event = create_event_table(metrics['timestamp'], Tug_Event.left_heel, metrics['cop_x'], metrics['cop_y'])
+        else:
+            event = create_event_table(metrics['timestamp'], Tug_Event.right_heel, metrics['cop_x'], metrics['cop_y'])
+        return event
+    elif (1600 < current_max_pressure < 2900 and y_dis <= 12):
+        if (placement == Placement.left):
+            event = create_event_table(metrics['timestamp'], Tug_Event.left_foot, metrics['cop_x'], metrics['cop_y'])
+        else:
+            event = create_event_table(metrics['timestamp'], Tug_Event.right_foot, metrics['cop_x'], metrics['cop_y'])
+        return event
+    
+def estimate_placement(walk_nr, mat, cop_x):
+
+    if (walk_nr == 1 and mat == 1):
         if cop_x >= 14:
             return Placement.left
         elif cop_x < 14:
             return Placement.right
                 
-    elif (walk == Tug_Event.walk1 and mat == 2):
+    elif (walk_nr == 1 and mat == 2):
         if cop_x >= 14:
             return Placement.right
         elif cop_x < 14:
             return Placement.left
         
-    elif (walk == Tug_Event.walk2 and mat == 2):
+    elif (walk_nr == 2 and mat == 2):
         if cop_x < 14:
             return Placement.right
         elif cop_x >= 14:
             return Placement.left
                 
-    elif (walk == Tug_Event.walk2 and mat == 1):
+    elif (walk_nr == 2 and mat == 1):
         if cop_x < 14:
             return Placement.left
         elif cop_x >= 14:
@@ -87,6 +170,7 @@ def calculate_metrics(frames):
     total_pressure = calc_total_pressure(frames)
     max_pressure = find_max_pressure(frames)
     pressure_area = calc_area(frames)
+    y_distance = calc_y_distance(frames)
     
     # Store metrics in the dictionary
     metrics['cop_x'] = cop_x
@@ -95,6 +179,8 @@ def calculate_metrics(frames):
     metrics['total_pressure'] = total_pressure
     metrics['max_pressure'] = max_pressure
     metrics['pressure_area'] = pressure_area
+    metrics['y_distance'] = y_distance
+    metrics['mat'] = mat
     
     return metrics
 
