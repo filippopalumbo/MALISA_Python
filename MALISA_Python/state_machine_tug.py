@@ -4,6 +4,13 @@ from enum import Enum, auto
 from MALISA_Python.enum.tug_states import Tug_State
 from MALISA_Python.enum.tug_events import *
 
+T_sit_to_stand = 3600
+T_max_pressure = 4000
+
+def load_seat_files(seat_file_path): 
+    df = []
+    df = pd.read_csv(seat_file_path)    
+    return df
 
 def load_files(file_paths):
     dfs = []
@@ -14,11 +21,23 @@ def load_files(file_paths):
     
     return dfs
 
-def on_prep(metrics):
-    return 0
+def on_prep(frame):
+    tot_pressure = calc_total_pressure(frame)
+
+    if(tot_pressure < T_sit_to_stand):
+        return Tug_State.stand
+    else:
+        return Tug_State.prep
+    
 
 def on_stand(metrics):
-    return 0
+    current_tot_pressure = metrics['max_pressure']
+
+    if(current_tot_pressure > T_max_pressure):
+        return Tug_State.walk1
+    else:
+        return Tug_State.stand
+    
 
 def on_walk(metrics, walk_nr):
     return 0
@@ -61,7 +80,7 @@ def calculate_metrics(frames):
     metrics = {}
     
     # Calculate metrics
-    cop_x, cop_y = calc_cop(frames)
+    cop_x, cop_y, mat = calc_cop(frames)
     total_pressure = calc_total_pressure(frames)
     max_pressure, max_pressure_index = find_max_pressure(frames)
     pressure_area = calc_area(frames)
@@ -78,6 +97,8 @@ def calculate_metrics(frames):
 
 def main():
     mat1, mat2 = load_files(["MALISA_Python/data/tug1_mat1.csv", "MALISA_Python/data/tug1_mat2.csv"])
+    # Load seat data
+    seat = load_seat_files("MALISA_Python/MALISA_Python/data/tug1_seat.csv")
 
     index = 0
     current_state = Tug_State.prep
@@ -86,6 +107,7 @@ def main():
     while index < len(mat1):
         frame1 = mat1[index, :, :]
         frame2 = mat2[index, :, :]
+        frame_seat = seat[index, :, :] 
 
         # Create dictionary with metrics
         metrics = calculate_metrics([frame1, frame2])
@@ -96,7 +118,7 @@ def main():
         match current_state:
 
             case Tug_State.prep:
-                next_state = on_prep(metrics)
+                next_state = on_prep(frame_seat)
 
             case Tug_State.stand:
                 next_state = on_stand(metrics)
