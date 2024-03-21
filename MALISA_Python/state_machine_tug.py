@@ -1,8 +1,7 @@
 import pandas as pd
 from calculations import *
-from enum import Enum, auto
-from MALISA_Python.enum.tug_states import Tug_State
-from MALISA_Python.enum.tug_events import *
+from enumnum.tug_events import *
+from enumnum.tug_states import *
 import streamlit as st
 import plotly.graph_objects as go  
 from plotly.subplots import make_subplots
@@ -14,24 +13,25 @@ threshold_y = 60
 y_dis_low = 5
 y_dis_high = 20
 
-def load_seat_files(seat_file_path): 
+def load_seat_file(file_path): 
     df = []
-    df = pd.read_csv(seat_file_path)    
+    df = pd.read_csv(file_path) 
+    
     return df
 
-def load_files(file_paths):
+def load_floor_files(file_paths):
     dfs = []
 
     for file_path in file_paths:
         df = pd.read_csv(file_path)
-        dfs.append(df.iloc[:, 1:].to_numpy().reshape(len(df), 80, 28))
-    
+        dfs.append(df)
+
     return dfs
 
 def on_prep(frame):
     pressure_on_seat = calc_total_pressure(frame)
     event = {}
-
+    
     if(pressure_on_seat < threshold_seat):
         # If total pressure on seat is below threshold T_sit_to_stand then log event stand
         event = create_event_table(frame['timestamp'], Tug_Event.stand, 0, 0)
@@ -39,6 +39,7 @@ def on_prep(frame):
     else:
         # Are we logging prep state?
         return Tug_State.prep 
+
     
 
 def on_stand(metrics):
@@ -108,8 +109,9 @@ def on_turn(metrics, frame_seat, turn_nr):
             return Tug_State.turn1, event
 
 
+
 def on_sit(metrics):
-    return 0
+    return 0,0
 
 def estimate_gait(metrics, walk_nr):
     cop_x = metrics['cop_x']
@@ -164,18 +166,18 @@ def calculate_metrics(frames):
     metrics = {}
     
     # Calculate metrics
-    cop_x, cop_y, mat = calc_cop(frames)
+    cop_x, cop_y, mat_nr = calc_cop(frames)
     total_pressure = calc_total_pressure(frames)
-    max_pressure, max_pressure_index = find_max_pressure(frames)
+    max_pressure = find_max_pressure(frames)
     pressure_area = calc_area(frames)
     y_distance = calc_y_distance(frames)
     
     # Store metrics in the dictionary
     metrics['cop_x'] = cop_x
     metrics['cop_y'] = cop_y
+    metrics['mat_nr'] = mat_nr
     metrics['total_pressure'] = total_pressure
     metrics['max_pressure'] = max_pressure
-    metrics['max_pressure_index'] = max_pressure_index
     metrics['pressure_area'] = pressure_area
     metrics['y_distance'] = y_distance
     metrics['mat'] = mat
@@ -192,56 +194,151 @@ def create_event_table(timestamp, event, cop_x, cop_y):
 
     return event_table
 
-
-def main():
-    mat1, mat2 = load_files(["MALISA_Python/data/tug1_mat1.csv", "MALISA_Python/data/tug1_mat2.csv"])
-    # Load seat data
-    seat = load_seat_files("MALISA_Python/MALISA_Python/data/tug1_seat.csv")
-
+def run_analysis(mat1, mat2, seat):
     index = 0
     current_state = Tug_State.prep
 
+    # When reshaping the dataframes mat1 and mat2 for calculations the timestamps are removed
+    # We keep mat1 and mat2 as dataframes-types to retrieve the timestamps
+    mat1_array = mat1.iloc[:, 1:].to_numpy().reshape(len(mat1), 80, 28)
+    mat2_array = mat2.iloc[:, 1:].to_numpy().reshape(len(mat2), 80, 28)
+    seat_array = seat.iloc[:, 1:].to_numpy().reshape(len(seat), 20, 20)
+
+    # Clear data of values below threshold 
+    mat1_array[mat1_array < 400] = 0
+    mat2_array[mat2_array < 400] = 0
+    seat_array[seat_array < 100] = 0
 
     while index < len(mat1):
-        frame1 = mat1[index, :, :]
-        frame2 = mat2[index, :, :]
-        frame_seat = seat[index, :, :] 
+        floor1_frame = mat1_array[index, :, :]
+        floor2_frame = mat2_array[index, :, :]
+        seat_frame = seat_array[index, :, :] 
 
         # Create dictionary with metrics
-        metrics = calculate_metrics([frame1, frame2])
+        metrics = calculate_metrics([floor1_frame, floor2_frame])
+        next_state, event_table = get_next_state(current_state, metrics, seat_frame)
 
-        # How to retrieve values from dictionary
-        # cop_x = metrics_hash_table['cop_x'])  
-
-        ###############VISUALS########################
-        fig = make_subplots(rows=1, cols=3)
-        ##############################################
-
-        match current_state:
-
-            case Tug_State.prep:
-                next_state, event_table = on_prep(frame_seat)
-
-            case Tug_State.stand:
-                next_state, event_table = on_stand(metrics)
-
-            case Tug_State.walk1:
-                next_state, event_table = on_walk(metrics, 1)
-
-            case Tug_State.turn1:
-                next_state, event_table = on_turn(metrics, 1)
-
-            case Tug_State.walk2:
-                next_state, event_table = on_walk(metrics, 2)
-
-            case Tug_State.turn2:
-                next_state, event_table = on_turn(metrics, 2)   
-            
-            case Tug_State.sit:
-                next_state, event_table = on_sit(metrics)
+        # Here log information in event_table !!
         
         current_state = next_state
-        index += 1      
+        index += 1
+
+    return True
+
+def get_next_state(current_state, metrics, seat_frame):
+    
+    match current_state:
+
+        case Tug_State.prep:
+            next_state, event_table = on_prep(seat_frame)
+
+        case Tug_State.stand:
+            next_state, event_table = on_stand(metrics)
+
+        case Tug_State.walk1:
+            next_state, event_table = on_walk(metrics, 1)
+
+        case Tug_State.turn1:
+            next_state, event_table = on_turn(metrics, 1)
+
+        case Tug_State.walk2:
+            next_state, event_table = on_walk(metrics, 2)
+
+        case Tug_State.turn2:
+            next_state, event_table = on_turn(metrics, 2)   
+            
+        case Tug_State.sit:
+            next_state, event_table = on_sit(metrics)
+
+    return next_state, event_table
+
+def create_heatmap(frame):
+    # 12 bits gives a resolution of 4096 values, including 0 -> 4095
+    heatmap_trace = go.Heatmap(z=frame, zmin=0, zmax=4095, colorscale='Plasma') 
+    return heatmap_trace
+
+def main():
+    test = st.selectbox(label='Select TUG test', options=['test 1', 'test 2', 'test 3', 'test 4'])
+
+    if test == 'test 1':
+        file_path_mat1 = 'MALISA_Python/data/tug1_mat1.csv'
+        file_path_mat2 = 'MALISA_Python/data/tug1_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug1_seat.csv'
+    if test == 'test 2':
+        file_path_mat1 = 'MALISA_Python/data/tug2_mat1.csv'
+        file_path_mat2 = 'MALISA_Python/data/tug2_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug2_seat.csv'
+    if test == 'test 3':
+        file_path_mat1 = 'MALISA_Python/data/tug3_mat1.csv'
+        file_path_mat2 = 'MALISA_Python/data/tug3_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug3_seat.csv'
+    if test == 'test 4':
+        file_path_mat1 = 'MALISA_Python/data/tug4_mat1.csv'
+        file_path_mat2 = 'MALISA_Python/data/tug4_mat2.csv'
+        file_path_seat = 'MALISA_Python/data/tug4_seat.csv'
+    
+    # Load data for sensor floor mats
+    mat1, mat2 = load_floor_files([file_path_mat1, file_path_mat2])
+
+    # Load data for sensor seat mat
+    seat = load_seat_file(file_path_seat)
+
+    mode = st.selectbox(label='Select MODE', options=['Run Analysis', 'Validate'])
+
+    if mode == 'Run Analysis':
+        if st.button('RUN'):
+            run_analysis(mat1, mat2, seat)
+
+    if mode == 'Validate':
+        index = st.slider('Choose frame', 0, len(mat1)-1)
+
+        # When reshaping the dataframes mat1 and mat2 for calculations the timestamps are removed
+        # That is why we need to keep mat1 and mat2 as dataframes-types to retrieve the timestamps
+        mat1_array = mat1.iloc[:, 1:].to_numpy().reshape(len(mat1), 80, 28)
+        mat2_array = mat2.iloc[:, 1:].to_numpy().reshape(len(mat2), 80, 28)
+        seat_array = seat.iloc[:, 1:].to_numpy().reshape(len(seat), 20, 20)
+
+        # Clear data of values below threshold
+        mat1_array[mat1_array < 400] = 0
+        mat2_array[mat2_array < 400] = 0
+        seat_array[seat_array < 100] = 0
+
+        current_state = Tug_State.prep
+
+        floor1_frame = mat1_array[index, :, :]
+        floor2_frame = mat2_array[index, :, :]
+        seat_frame = seat_array[index, :, :] 
+
+        # Create dictionary with metrics
+        metrics = calculate_metrics([floor1_frame, floor2_frame])
+        next_state, event_table = get_next_state(current_state, metrics, seat_frame)
+
+        info = [('timestamp', mat1.loc[index, 'timestamp']),('event', current_state),('cop X', metrics['cop_x']),('cop Y', metrics['cop_y'])]
+        info = pd.DataFrame(info, columns=['Column', 'Value'])
+        st.table(info)
+
+        current_state = next_state
+
+        # Create subplots for both floor mats and seat mat
+        fig = make_subplots(rows=1, cols=3, column_widths=[280, 280, 200], row_heights=[800])
+
+        fig.add_trace(create_heatmap(floor1_frame), row=1, col=1)
+        fig.add_trace(create_heatmap(floor2_frame), row=1, col=2)
+        fig.add_trace(create_heatmap(seat_frame), row=1, col=3)
+
+        # Update layout
+        fig.layout.height = 800
+        fig.layout.width = (280 * 2) + 200
+        # Adjust the heights of specific rows
+        fig.update_layout(
+            yaxis1=dict(domain=[0, 800/1000]),  # Adjust the height of the first row
+            yaxis2=dict(domain=[0, 800/1000]),  # Adjust the height of the second row
+            yaxis3=dict(domain=[0, 200/1000])   # Adjust the height of the third row
+        )
+        fig.update_layout(showlegend=False)
+
+        # Show the plotly chart
+        st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
