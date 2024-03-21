@@ -1,5 +1,6 @@
 import pandas as pd
 from calculations import *
+from enum import Enum
 from enumnum.tug_events import *
 from enumnum.tug_states import *
 import streamlit as st
@@ -28,20 +29,20 @@ def load_floor_files(file_paths):
 
     return dfs
 
-def on_prep(frame):
-    pressure_on_seat = calc_total_pressure(frame)
+def on_prep(metrics):
+    seat_total_pressure = metrics['seat_total_pressure']
     event = {}
     
-    if(pressure_on_seat < threshold_seat):
+    if(seat_total_pressure < threshold_seat):
         # If total pressure on seat is below threshold T_sit_to_stand then log event stand
-        event = create_event_table(frame['timestamp'], Tug_Event.stand, 0, 0)
+        event = create_event_table(metrics['timestamp'], Tug_Event.stand, metrics['cop_x'], metrics['cop_y'])
         return Tug_State.stand, event
     else:
         # Are we logging prep state?
-        return Tug_State.prep 
+        return Tug_State.prep, create_event_table(metrics['timestamp'], Tug_State.prep, metrics['cop_x'], metrics['cop_y'])
+
 
     
-
 def on_stand(metrics):
     current_tot_pressure = metrics['max_pressure']
     event = {}
@@ -58,55 +59,57 @@ def on_stand(metrics):
 
 
 def on_walk(metrics, walk_nr):
-    cop_y = metrics['cop_y']
-    event = {}
+    # cop_y = metrics['cop_y']
+    # event = {}
 
-    if(walk_nr == 1):
-        if (cop_y > threshold_y):
-            # Indicates that we are now turning around to start walking back
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn1, event
-        else:
-            # Still walking, estimate and log heel or foot
-            event = estimate_gait(metrics, walk_nr)
-            return Tug_State.walk1, event
-    elif(walk_nr == 2):
-        # On second walk (walk back)
-        if(cop_y > threshold_y):
-            # Indicates that we are now turning around to evantually sit down
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn2, event
-        else:
-            # Still walking, estimate and log heel or foot
-            event = estimate_gait(metrics, walk_nr)
-            return Tug_State.walk2, event
+    # if(walk_nr == 1):
+    #     if (cop_y > threshold_y):
+    #         # Indicates that we are now turning around to start walking back
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.turn1, event
+    #     else:
+    #         # Still walking, estimate and log heel or foot
+    #         event = estimate_gait(metrics, walk_nr)
+    #         return Tug_State.walk1, event
+    # elif(walk_nr == 2):
+    #     # On second walk (walk back)
+    #     if(cop_y > threshold_y):
+    #         # Indicates that we are now turning around to evantually sit down
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.turn2, event
+    #     else:
+    #         # Still walking, estimate and log heel or foot
+    #         event = estimate_gait(metrics, walk_nr)
+    #         return Tug_State.walk2, event
+    return 0,0
 
 
-def on_turn(metrics, frame_seat, turn_nr):
-    cop_y = metrics['cop_y']
-    event = {}
-    pressure_on_seat = calc_total_pressure(frame_seat)
+def on_turn(metrics, turn_nr):
+    # cop_y = metrics['cop_y']
+    # event = {}
+    # pressure_on_seat = calc_total_pressure(frame_seat)
 
-    if(turn_nr == 1):
-        # On first turn
-        if(cop_y < threshold_y):
-            # Indicates that we started walking again after turning
-            event = create_event_table(metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.walk2, event
-        else:
-            # Still turning 
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn1, event
-    elif(turn_nr == 2):
-        # On second turn
-        if(pressure_on_seat > threshold_seat):
-            # Indicates that we are done turning and now sitting
-            event = create_event_table(metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.sit, event
-        else:
-            # Still turning 
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn1, event
+    # if(turn_nr == 1):
+    #     # On first turn
+    #     if(cop_y < threshold_y):
+    #         # Indicates that we started walking again after turning
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.walk2, event
+    #     else:
+    #         # Still turning 
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.turn1, event
+    # elif(turn_nr == 2):
+    #     # On second turn
+    #     if(pressure_on_seat > threshold_seat):
+    #         # Indicates that we are done turning and now sitting
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.sit, event
+    #     else:
+    #         # Still turning 
+    #         event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+    #         return Tug_State.turn1, event
+    return 0,0
 
 
 
@@ -117,7 +120,7 @@ def estimate_gait(metrics, walk_nr):
     cop_x = metrics['cop_x']
     current_max_pressure = metrics['max_pressure']
     y_dis = metrics['y_distance']
-    mat_nr = metrics['mat']
+    mat_nr = metrics['mat_nr']
     event = {}
     placement = estimate_placement(walk_nr, mat_nr, cop_x)
 
@@ -162,25 +165,27 @@ def estimate_placement(walk_nr, mat, cop_x):
     
     return None
 
-def calculate_metrics(frames):
+def calculate_metrics(floor_mat_frames, seat_frame):
     metrics = {}
     
     # Calculate metrics
-    cop_x, cop_y, mat_nr = calc_cop(frames)
-    total_pressure = calc_total_pressure(frames)
-    max_pressure = find_max_pressure(frames)
-    pressure_area = calc_area(frames)
-    y_distance = calc_y_distance(frames)
+    cop_x, cop_y, mat_nr = calc_cop(floor_mat_frames)
+    total_pressure = calc_total_pressure(floor_mat_frames)
+    max_pressure = find_max_pressure(floor_mat_frames)
+    pressure_area = calc_area(floor_mat_frames)
+    y_distance = calc_y_distance(floor_mat_frames)
+
+    seat_total_pressure = calc_total_pressure(seat_frame)
     
     # Store metrics in the dictionary
     metrics['cop_x'] = cop_x
     metrics['cop_y'] = cop_y
     metrics['mat_nr'] = mat_nr
     metrics['total_pressure'] = total_pressure
+    metrics['seat_total_pressure'] = seat_total_pressure
     metrics['max_pressure'] = max_pressure
     metrics['pressure_area'] = pressure_area
     metrics['y_distance'] = y_distance
-    metrics['mat'] = mat
     
     return metrics
 
@@ -215,8 +220,9 @@ def run_analysis(mat1, mat2, seat):
         seat_frame = seat_array[index, :, :] 
 
         # Create dictionary with metrics
-        metrics = calculate_metrics([floor1_frame, floor2_frame])
-        next_state, event_table = get_next_state(current_state, metrics, seat_frame)
+        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
+        metrics['timestamp'] = mat1.loc[index, 'timestamp'] 
+        next_state, event_table = get_next_state(current_state, metrics)
 
         # Here log information in event_table !!
         
@@ -225,12 +231,12 @@ def run_analysis(mat1, mat2, seat):
 
     return True
 
-def get_next_state(current_state, metrics, seat_frame):
+def get_next_state(current_state, metrics):
     
     match current_state:
 
         case Tug_State.prep:
-            next_state, event_table = on_prep(seat_frame)
+            next_state, event_table = on_prep(metrics)
 
         case Tug_State.stand:
             next_state, event_table = on_stand(metrics)
@@ -310,10 +316,11 @@ def main():
         seat_frame = seat_array[index, :, :] 
 
         # Create dictionary with metrics
-        metrics = calculate_metrics([floor1_frame, floor2_frame])
-        next_state, event_table = get_next_state(current_state, metrics, seat_frame)
+        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
+        metrics['timestamp'] = mat1.loc[index, 'timestamp']
+        next_state, event_table = get_next_state(current_state, metrics)
 
-        info = [('timestamp', mat1.loc[index, 'timestamp']),('event', current_state),('cop X', metrics['cop_x']),('cop Y', metrics['cop_y'])]
+        info = [('timestamp', metrics['timestamp']),('event', event_table['event']),('cop X', event_table['cop_x']),('cop Y', event_table['cop_y'])]
         info = pd.DataFrame(info, columns=['Column', 'Value'])
         st.table(info)
 
