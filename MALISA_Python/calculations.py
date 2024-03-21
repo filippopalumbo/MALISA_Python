@@ -46,30 +46,61 @@ def calc_area(frames):
     return area
 
 def calc_cop(frames):
-    cop_x = 0
-    cop_y = 0
+    total_pressure_frame1 = np.sum(frames[0])
+    total_pressure_frame2 = np.sum(frames[1])
 
-    total_pressure = 0
+    if (total_pressure_frame1 == 0 and total_pressure_frame2 == 0):
+        return 0,0,0
+    elif (total_pressure_frame1 > 0 and total_pressure_frame2 == 0):
+        return calc_cop_single_frame(frames[0], 1)
+    elif (total_pressure_frame2 > 0 and total_pressure_frame1 == 0):
+        return calc_cop_single_frame(frames[1], 2)
+    elif (total_pressure_frame1 > 0 and total_pressure_frame2 > 0):
+        return calc_cop_two_frames(frames[0], frames[1])
 
-    for frame in frames:
-        total_pressure += np.sum(frame)
+def calc_cop_single_frame(frame, mat):
 
-    if total_pressure == 0:
-        return cop_x, cop_y
+    total_pressure = np.sum(frame)
 
-    for frame in frames:
-        # calculate the indices of the image
-        indices_y, indices_x = np.indices(frame.shape)
+    # Calculate the indices of the frame
+    indices_y, indices_x = np.indices(frame.shape)
 
-        # calculate total pressure
-        total_pressure_frame = np.sum(frame)
-
-        if total_pressure_frame  != 0:
-            # calculate center of pressure
-            cop_x += (np.sum(frame * indices_x) / total_pressure_frame)
-            cop_y += (np.sum(frame * indices_y) / total_pressure_frame)
+    # Calculate center of pressure
+    cop_x = (np.sum(frame * indices_x) / total_pressure)
+    cop_y = (np.sum(frame * indices_y) / total_pressure)
     
-    return int(np.round(cop_x)), int(np.round(cop_y))
+    return int(np.round(cop_x)), int(np.round(cop_y)), mat
+
+def calc_cop_two_frames(frame1, frame2):
+
+    frame1_total_pressure = np.sum(frame1)
+    frame2_total_pressure = np.sum(frame2)    
+
+    # Calculate the indices of each frame
+    frame1_indices_y, frame1_indices_x = np.indices(frame1.shape)
+    frame2_indices_y, frame2_indices_x = np.indices(frame2.shape)
+
+    # Calculate center of pressure for each frame
+    frame1_cop_x = (np.sum(frame1 * frame1_indices_x) / frame1_total_pressure)
+    frame1_cop_y = (np.sum(frame1 * frame1_indices_y) / frame1_total_pressure)
+
+    frame2_cop_x = (np.sum(frame2 * frame2_indices_x) / frame2_total_pressure)
+    frame2_cop_y = (np.sum(frame2 * frame2_indices_y) / frame2_total_pressure)
+
+    cop_x = (frame1_cop_x + (27-frame2_cop_x))/2
+
+    cop_y = (frame1_cop_y + frame2_cop_y)/2
+
+    mat = 1
+
+    if(cop_y > frame1_cop_y):
+        cop_y = frame2_cop_y-cop_y
+        mat = 2
+
+    if(cop_y < frame1_cop_y):
+        cop_y = frame1_cop_y - cop_y
+
+    return int(np.round(cop_x)), int(np.round(cop_y)), mat
  
 def calc_y_distance(frames):
     total_pressure = 0
