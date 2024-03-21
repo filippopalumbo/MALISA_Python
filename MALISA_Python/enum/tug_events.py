@@ -14,6 +14,6 @@ class Tug_Event(Enum):
     turn1 = 11
     turn2 = 12
 
-class Direction(Enum):
+class Placement(Enum):
     left = "left"
     right = "right"
