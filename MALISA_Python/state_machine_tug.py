@@ -3,6 +3,9 @@ from calculations import *
 from enum import Enum, auto
 from MALISA_Python.enum.tug_states import Tug_State
 from MALISA_Python.enum.tug_events import *
+import streamlit as st
+import plotly.graph_objects as go  
+from plotly.subplots import make_subplots
 
 T_sit_to_stand = 3600
 T_max_pressure = 4000
@@ -95,6 +98,17 @@ def calculate_metrics(frames):
     
     return metrics
 
+def create_event_table(timestamp, event, cop_x, cop_y):
+    event_table = {}
+
+    event_table['timestamp'] = timestamp
+    event_table['event'] = event
+    event_table['cop_x'] = cop_x
+    event_table['cop_y'] = cop_y
+
+    return event_table
+
+
 def main():
     mat1, mat2 = load_files(["MALISA_Python/data/tug1_mat1.csv", "MALISA_Python/data/tug1_mat2.csv"])
     # Load seat data
@@ -115,28 +129,32 @@ def main():
         # How to retrieve values from dictionary
         # cop_x = metrics_hash_table['cop_x'])  
 
+        ###############VISUALS########################
+        fig = make_subplots(rows=1, cols=3)
+        ##############################################
+
         match current_state:
 
             case Tug_State.prep:
-                next_state = on_prep(frame_seat)
+                next_state, event_table = on_prep(frame_seat)
 
             case Tug_State.stand:
-                next_state = on_stand(metrics)
+                next_state, event_table = on_stand(metrics)
 
             case Tug_State.walk1:
-                next_state = on_walk(metrics, 1)
+                next_state, event_table = on_walk(metrics, 1)
 
             case Tug_State.turn1:
-                next_state = on_turn(metrics, 1)
+                next_state, event_table = on_turn(metrics, 1)
 
             case Tug_State.walk2:
-                next_state = on_walk(metrics, 2)
+                next_state, event_table = on_walk(metrics, 2)
 
             case Tug_State.turn2:
-                next_state = on_turn(metrics, 2)   
+                next_state, event_table = on_turn(metrics, 2)   
             
             case Tug_State.sit:
-                next_state = on_sit(metrics)
+                next_state, event_table = on_sit(metrics)
         
         current_state = next_state
         index += 1      
