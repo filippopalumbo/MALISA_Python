@@ -336,14 +336,9 @@ def main():
         # Create dictionary with metrics
         metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
         metrics['timestamp'] = mat1.loc[index, 'timestamp']
-        next_state = 0
-        event_table = 0
-        next_state, event_table = get_next_state(state, metrics)
 
-        state = next_state
-
-        info = [('timestamp', metrics['timestamp']),('event', event_table['event']),('cop X', event_table['cop_x']),('cop Y', event_table['cop_y'])]
-        info = pd.DataFrame(info, columns=['Column', 'Value'])
+        info = [('timestamp', metrics['timestamp']), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), ('seat total pressure', metrics['seat_total_pressure']), ('floor total pressure', metrics['total_pressure']), ('Y distance', metrics['y_distance'])]
+        info = pd.DataFrame(info, columns=['Metric', 'Value'])
         st.table(info)
 
         # Create subplots for both floor mats and seat mat
