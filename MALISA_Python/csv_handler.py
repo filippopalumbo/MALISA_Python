@@ -2,7 +2,14 @@ import csv
 import os
 import uuid
 
+# Events:
+# l-heel, l-foot, l-toe
+# r-heel, r-foot, r-toe
+# stand, sit
+# walk1, walk2, turn1, turn2
+
 def create_unique_filepath(initials):
+    #Creates a filepath with a unique id number 
     while True:
         # Generate a unique identifier
         unique_id = str(uuid.uuid4().hex)[:6]  # Get the first 6 characters of a random hexadecimal string 
@@ -16,19 +23,28 @@ def create_unique_filepath(initials):
 
     return filepath
 
-# Events:
-# l-heel, l-foot, l-toe
-# r-heel, r-foot, r-toe
-# stand, sit
-# walk1, walk2, turn1, turn2
+def create_filepath(initials, test):
+    # Create filepath based on test number and initials
+    test = test.replace(" ", "")
 
-def create_csv_file(initials):
+    while True:
+        # Create the filepath
+        filepath = f"MALISA_Python/tug_event_data/tug_{initials}_{test}.csv"
+        
+        # Check if the filepath already exists
+        if not os.path.exists(filepath):
+            break  # Exit the loop if the filepath is unique
+
+    return filepath
+
+
+def create_csv_file(initials, test):
     # Create a new csv file containg data from test and person 
     # maybe generate a unique ID for each file? 
     # Define CSV file headers
     # | timestamp | event | COP x | COP y | total pressure | total area | 
-    headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure", "total_area"]  
-    filepath = create_unique_filepath(initials)
+    headers = ["timestamp", "event", "COP_x", "COP_y"]  
+    filepath = create_filepath(initials, test)
 
     if os.path.exists(filepath):
         raise FileExistsError("File already exists.")
@@ -41,7 +57,7 @@ def create_csv_file(initials):
     return filepath
     
 
-def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure, total_area ):
+def write_to_csv(filepath, timestamp, event, COP_x, COP_y):
     # Check if the file exists, if not, create it with headers
     if not os.path.exists(filepath):
        create_csv_file(filepath)
@@ -49,7 +65,7 @@ def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure, total
     # Write data to CSV file
     with open(filepath, mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([timestamp, event, COP_x, COP_y, total_pressure, total_area])
+        writer.writerow([timestamp, event, COP_x, COP_y])
 
 def get_event_data(filepath, event):
     # List to store event data
