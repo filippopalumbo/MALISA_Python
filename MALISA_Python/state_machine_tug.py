@@ -47,7 +47,6 @@ def on_prep(metrics):
     else:
         # Are we logging prep state?
         return Tug_State.prep, create_event_table(metrics['timestamp'], Tug_State.prep, metrics['cop_x'], metrics['cop_y'])
-
     
 def on_stand(metrics):
     cop_y = metrics['cop_y']
@@ -65,64 +64,68 @@ def on_stand(metrics):
         event = create_event_table(metrics['timestamp'], Tug_Event.stand, metrics['cop_x'], metrics['cop_y'])
         return Tug_State.stand, event
 
+def on_walk_1(metrics):
+    cop_y = metrics['cop_y']
+    event = {}
+    # The first walk during TUG (walking away from the chair)
+    if (cop_y > threshold_y):
+        # Indicates that we are now turning around to start walking back
+        event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+        print(metrics)
+        print(event)
+        return Tug_State.turn1, event
+    else:
+        # Still walking, estimate and log heel or foot
+        event = estimate_gait(metrics, 1)
+        return Tug_State.walk1, event
 
-def on_walk(metrics, walk_nr):
+def on_walk_2(metrics):
     cop_y = metrics['cop_y']
     event = {}
 
-    if(walk_nr == 1):
-        if (cop_y > threshold_y):
-            # Indicates that we are now turning around to start walking back
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
-            print(metrics)
-            print(event)
-            return Tug_State.turn1, event
-        else:
-            # Still walking, estimate and log heel or foot
-            event = estimate_gait(metrics, walk_nr)
-            return Tug_State.walk1, event
-    elif(walk_nr == 2):
-        # On second walk (walk back)
-        if(cop_y > threshold_y):
-            # Indicates that we are now turning around to evantually sit down
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
-            print(metrics)
-            print(event)
-            return Tug_State.turn2, event
-        else:
-            # Still walking, estimate and log heel or foot
-            event = estimate_gait(metrics, walk_nr)
-            return Tug_State.walk2, event
+     # On second walk (walk back)
+    if(cop_y > threshold_y):
+        # Indicates that we are now turning around to evantually sit down
+        event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+        print(metrics)
+        print(event)
+        return Tug_State.turn2, event
+    else:
+        # Still walking, estimate and log heel or foot
+        event = estimate_gait(metrics, 2)
+        return Tug_State.walk2, event
 
-def on_turn(metrics, turn_nr):
+def on_turn_1(metrics):
     cop_y = metrics['cop_y']
+    event = {}
+
+    # First turn during TUG (turning at the end of the walkway to walk back to the chair)
+    if(cop_y < threshold_y):
+        # Indicates that we started walking again after turning
+        event = create_event_table(metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'])
+        print(metrics)
+        print(event)
+        return Tug_State.walk2, event
+    else:
+        # Still turning 
+        event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
+        return Tug_State.turn1, event
+
+def on_turn_2(metrics):
     event = {}
     pressure_on_seat = metrics['seat_total_pressure']
 
-    if(turn_nr == 1):
-        # On first turn
-        if(cop_y < threshold_y):
-            # Indicates that we started walking again after turning
-            event = create_event_table(metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'])
-            print(metrics)
-            print(event)
-            return Tug_State.walk2, event
-        else:
-            # Still turning 
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn1, event
-    elif(turn_nr == 2):
-        # On second turn
-        if(pressure_on_seat > threshold_seat):
-            # Indicates that we are done turning and now sitting
-            event = create_event_table(metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'])
-            print(metrics)
-            print(event)
-            return Tug_State.sit, event
-        else:
-            # Still turning 
-            event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
-            return Tug_State.turn1, event
+    # Second turn during TUG (turning to sit back down)
+    if(pressure_on_seat > threshold_seat):
+        # Indicates that we are done turning and now sitting
+        event = create_event_table(metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'])
+        print(metrics)
+        print(event)
+        return Tug_State.sit, event
+    else:
+        # Still turning 
+        event = create_event_table(metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'])
+        return Tug_State.turn1, event
 
 def on_sit(metrics):
     return 0,0
@@ -234,16 +237,16 @@ def get_next_state(current_state, metrics):
             return on_stand(metrics)
 
         case Tug_State.walk1:
-            return on_walk(metrics, 1)
+            return on_walk_1(metrics)
 
         case Tug_State.turn1:
-            return on_turn(metrics, 1)
+            return on_turn_1(metrics)
 
         case Tug_State.walk2:
-            return on_walk(metrics, 2)
+            return on_walk_2(metrics)
 
         case Tug_State.turn2:
-            return on_turn(metrics, 2)   
+            return on_turn_1(metrics)   
             
         case Tug_State.sit:
             return on_sit(metrics)
