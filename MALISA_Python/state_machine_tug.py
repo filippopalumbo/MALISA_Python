@@ -3,6 +3,7 @@ from calculations import *
 from enum import Enum
 from enumerations.tug_events import *
 from enumerations.tug_states import *
+from csv_handler import *
 import streamlit as st
 import plotly.graph_objects as go  
 from plotly.subplots import make_subplots
@@ -306,6 +307,9 @@ def main():
     
     # Load data for sensor floor mats
     timestamp_list, floor1_array, floor2_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
+
+    # create CSV file for test 
+    create_csv_file('DS', test)
 
     mode = st.selectbox(label='Select MODE', options=['Run Analysis', 'Validate'])
 
