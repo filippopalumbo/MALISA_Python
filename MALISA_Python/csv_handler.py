@@ -22,13 +22,14 @@ def create_unique_filepath(initials):
 # stand, sit
 # walk1, walk2, turn1, turn2
 
-def create_csv_file(filepath):
+def create_csv_file(initials):
     # Create a new csv file containg data from test and person 
     # maybe generate a unique ID for each file? 
     # Define CSV file headers
     # | timestamp | event | COP x | COP y | total pressure | total area | 
     headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure", "total_area"]  
-    
+    filepath = create_unique_filepath(initials)
+
     if os.path.exists(filepath):
         raise FileExistsError("File already exists.")
     
@@ -37,6 +38,7 @@ def create_csv_file(filepath):
         writer.writerow(headers)
 
     print("CSV file successfully created")
+    return filepath
     
 
 def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure, total_area ):
