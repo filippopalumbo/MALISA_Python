@@ -13,6 +13,8 @@ class Tug_Event(Enum):
     walk2 = 10
     turn1 = 11
     turn2 = 12
+    start = 13
+    end = 14
 
 class Placement(Enum):
     left = "left"

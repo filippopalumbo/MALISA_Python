@@ -26,28 +26,21 @@ def create_unique_filepath(initials):
 def create_filepath(initials, test):
     # Create filepath based on test number and initials
     test = test.replace(" ", "")
-
-    while True:
-        # Create the filepath
-        filepath = f"MALISA_Python/tug_event_data/tug_{initials}_{test}.csv"
-        
-        # Check if the filepath already exists
-        if not os.path.exists(filepath):
-            break  # Exit the loop if the filepath is unique
-
+    filepath = f"MALISA_Python/tug_event_data/tug_{initials}_{test}.csv"
     return filepath
 
 
-def create_csv_file(initials, test):
+def create_csv_file(filepath):
     # Create a new csv file containg data from test and person 
-    # maybe generate a unique ID for each file? 
     # Define CSV file headers
     # | timestamp | event | COP x | COP y | total pressure | total area | 
-    headers = ["timestamp", "event", "COP_x", "COP_y"]  
-    filepath = create_filepath(initials, test)
+    headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure"]  
+    # filepath = create_filepath(initials, test)
 
+    # Check if the filepath already exists, if it does, return...
     if os.path.exists(filepath):
-        raise FileExistsError("File already exists.")
+        print("CSV file already exist")
+        return filepath 
     
     with open(filepath, mode="w", newline="") as file:
         writer = csv.writer(file)
@@ -57,15 +50,15 @@ def create_csv_file(initials, test):
     return filepath
     
 
-def write_to_csv(filepath, timestamp, event, COP_x, COP_y):
+def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure):
     # Check if the file exists, if not, create it with headers
-    if not os.path.exists(filepath):
-       create_csv_file(filepath)
+    # if not os.path.exists(filepath):
+    #    create_csv_file(filepath)
     
     # Write data to CSV file
     with open(filepath, mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([timestamp, event, COP_x, COP_y])
+        writer.writerow([timestamp, event, COP_x, COP_y, total_pressure])
 
 def get_event_data(filepath, event):
     # List to store event data
