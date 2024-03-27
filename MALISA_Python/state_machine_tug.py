@@ -246,42 +246,42 @@ def get_next_state(current_state, metrics, filepath_TED):
 
 def get_file_paths(test):
 
-    if test == '1':
+    if test == 'test 1':
         file_path_mat1 = 'MALISA_Python/data/tug1_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug1_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug1_seat.csv'
-    if test == '2':
+    if test == 'test 2':
         file_path_mat1 = 'MALISA_Python/data/tug2_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug2_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug2_seat.csv'
-    if test == '3':
+    if test == 'test 3':
         file_path_mat1 = 'MALISA_Python/data/tug3_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug3_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug3_seat.csv'
-    if test == '4':
+    if test == 'test 4':
         file_path_mat1 = 'MALISA_Python/data/tug4_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug4_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug4_seat.csv'  
 
-    return file_path_mat1, file_path_mat2, file_path_seat   
+    return file_path_mat1, file_path_mat2, file_path_seat 
 
 def create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame):
     # Create subplots for both floor mats and seat mat
-    fig = make_subplots(rows=1, cols=3, column_widths=[280, 280, 200], row_heights=[800])
+    fig = make_subplots(rows=1, cols=3, column_widths=[200, 280, 280], row_heights=[800])
 
     # 12 bits gives a resolution of 4096 values, including 0 -> 4095
-    fig.add_trace(go.Heatmap(z=floor1_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=1)
-    fig.add_trace(go.Heatmap(z=floor2_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=2)
-    fig.add_trace(go.Heatmap(z=seat_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=3)
+    fig.add_trace(go.Heatmap(z=seat_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=1)
+    fig.add_trace(go.Heatmap(z=floor1_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=2)
+    fig.add_trace(go.Heatmap(z=floor2_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=3)
 
     # Update layout
     fig.layout.height = 800
     fig.layout.width = (280 * 2) + 200
     # Adjust the heights of specific rows
     fig.update_layout(
-        yaxis1=dict(domain=[0, 800/1000]),  # Adjust the height of the first row
-        yaxis2=dict(domain=[0, 800/1000]),  # Adjust the height of the second row
-        yaxis3=dict(domain=[0, 200/1000])   # Adjust the height of the third row
+        yaxis1=dict(domain=[0, 200/800]),  # Adjust the height of the first row
+        yaxis2=dict(domain=[0, 800/800]),  # Adjust the height of the second row
+        yaxis3=dict(domain=[0, 800/800])   # Adjust the height of the third row
     )
     fig.update_layout(showlegend=False)
 
@@ -289,25 +289,42 @@ def create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame):
     st.plotly_chart(fig)
 
 def create_table(metrics):
-    info = [('timestamp', metrics['timestamp'][:21]), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), ('seat total pressure', metrics['seat_total_pressure']), ('floor total pressure', metrics['total_pressure']), ('Y distance', metrics['y_distance']), ('X-cord (max pres.)', metrics['x_cord_max_pressure'])]
+    info = [('timestamp', metrics['timestamp'][:21]), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), ('seat total pressure', metrics['seat_total_pressure']), ('floor maximum pressure', metrics['max_pressure']), ('Y distance', metrics['y_distance']), ('X-cord (max pres.)', metrics['x_cord_max_pressure'])]
     info = pd.DataFrame(info, columns=['Metric', 'Value'])
     st.table(info)
 
-
 def main():
-
-    print("Choose test: (1, 2, 3, or 4):")
-
-    test = input()
+    test = st.selectbox(label='Select TUG test', options=['test 1', 'test 2', 'test 3', 'test 4'])
 
     file_path_mat1, file_path_mat2, file_path_seat = get_file_paths(test)
 
-    # create CSV file for test to save tug event data (TED)  
-    filepath_TED = create_filepath('DS', test)
+    # Load data for sensor floor mats
+    timestamp_list, floor1_array, floor2_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
+    # Create CSV file for test to save tug event data (TED) 
+    filepath_TED = create_filepath('DS', test)
     create_csv_file(filepath_TED)
 
-    run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
+    mode = st.selectbox(label='Select Mode', options=['Run Analysis', 'Visual Analysis'])
 
+    if mode == 'Run Analysis':
+        if st.button("RUN"):
+            run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
+
+    if mode == 'Visual Analysis':
+
+        index = st.slider('Choose frame', 0, len(timestamp_list)-1, key='frame_slider')
+
+        floor1_frame = floor1_array[index, :, :]
+        floor2_frame = floor2_array[index, :, :]
+        seat_frame = seat_array[index, :, :] 
+
+        # Create dictionary with metrics
+        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
+        metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
+
+        create_table(metrics)
+
+        create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame)
 
 main()
