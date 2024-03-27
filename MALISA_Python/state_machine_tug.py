@@ -1,5 +1,5 @@
 import pandas as pd
-from calculations import *
+from pressure_sensor_calculations import *
 from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
@@ -246,19 +246,19 @@ def get_next_state(current_state, metrics, filepath_TED):
 
 def get_file_paths(test):
 
-    if test == 'test 1':
+    if test == '1':
         file_path_mat1 = 'MALISA_Python/data/tug1_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug1_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug1_seat.csv'
-    if test == 'test 2':
+    if test == '2':
         file_path_mat1 = 'MALISA_Python/data/tug2_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug2_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug2_seat.csv'
-    if test == 'test 3':
+    if test == '3':
         file_path_mat1 = 'MALISA_Python/data/tug3_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug3_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug3_seat.csv'
-    if test == 'test 4':
+    if test == '4':
         file_path_mat1 = 'MALISA_Python/data/tug4_mat1.csv'
         file_path_mat2 = 'MALISA_Python/data/tug4_mat2.csv'
         file_path_seat = 'MALISA_Python/data/tug4_seat.csv'  
@@ -296,37 +296,18 @@ def create_table(metrics):
 
 def main():
 
-    test = st.selectbox(label='Select TUG test', options=['test 1', 'test 2', 'test 3', 'test 4'])
+    print("Choose test: (1, 2, 3, or 4):")
+
+    test = input()
 
     file_path_mat1, file_path_mat2, file_path_seat = get_file_paths(test)
-    
-    # Load data for sensor floor mats
-    timestamp_list, floor1_array, floor2_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
     # create CSV file for test to save tug event data (TED)  
     filepath_TED = create_filepath('DS', test)
+
     create_csv_file(filepath_TED)
-    
-    mode = st.selectbox(label='Select MODE', options=['Run Analysis', 'Validate'])
 
-    if mode == 'Run Analysis':
-        if st.button('RUN'):
-            run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
-
-    if mode == 'Validate':
-        index = st.slider('Choose frame', 0, len(timestamp_list)-1)
-
-        floor1_frame = floor1_array[index, :, :]
-        floor2_frame = floor2_array[index, :, :]
-        seat_frame = seat_array[index, :, :] 
-
-        # Create dictionary with metrics
-        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
-        metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
-
-        create_table(metrics)
-
-        create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame)
+    run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
 
 
 main()
