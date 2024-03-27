@@ -1,51 +1,71 @@
+"""
+Summary:
+This Python script provides functionality to create unique file paths, create CSV files with specific headers, 
+write data to CSV files, and retrieve data from CSV files.
+
+Purpose:
+The purpose of this module is to offer a versatile data saving handler that can be utilized across various 
+applications for efficient management and storage of data in a generic manner.
+
+Contents:
+- create_unique_filepath
+- create_filepath
+- create_csv_file
+- write_to_csv
+- read_csv_data
+- get_csv_event 
+
+Usage:
+Import this file into your Python script using 'from csv_handler import *' to create, read and write to a CSV file for data managment.
+
+Author: [Malin Ramkull & Hedda Eriksson]
+Date: [2024-03-27]
+"""
 import csv
 import os
 import uuid
 
-# Events:
-# l-heel, l-foot, l-toe
-# r-heel, r-foot, r-toe
-# stand, sit
-# walk1, walk2, turn1, turn2
-
 def create_unique_filepath(initials):
-    #Creates a filepath with a unique id number 
     while True:
-        # Generate a unique identifier
-        unique_id = str(uuid.uuid4().hex)[:6]  # Get the first 6 characters of a random hexadecimal string 
+        unique_id = str(uuid.uuid4().hex)[:4]  # Get the first 4 characters of a random hexadecimal string 
         
         # Create the filepath
         filepath = f"tug_{initials}_{unique_id}.csv"
         
-        # Check if the filepath already exists
+        # Check if the filename is available by verifying the absence of a filepath with the same name.
+        # If the filepath is unique, exit the loop.
         if not os.path.exists(filepath):
-            break  # Exit the loop if the filepath is unique
+            break  
 
     return filepath
 
 def create_filepath(initials, test):
     # Create filepath based on test number and initials
-    test = test.replace(" ", "")
+    if isinstance(test, str):
+        if " " in test:
+            test = test.replace(" ", "")
+
     filepath = f"MALISA_Python/tug_event_data/tug_{initials}_{test}.csv"
+
     return filepath
 
 
 def create_csv_file(filepath):
-    # Create a new csv file containg data from test and person 
-    # Define CSV file headers
-    # | timestamp | event | COP x | COP y | total pressure | total area | 
+    # Define (new) CSV file's header
+    # | timestamp | event | COP x | COP y | total pressure |
     headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure"]  
     # filepath = create_filepath(initials, test)
 
-    # Check if the filepath already exists, if it does, return...
+    # Check if the filepath already exists, if it does, return filepath
     if os.path.exists(filepath):
         print("CSV file already exist")
         return filepath 
     
+    # Create new CSV file
     with open(filepath, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(headers)
-
+        
     print("CSV file successfully created")
     return filepath
     
@@ -60,8 +80,22 @@ def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure):
         writer = csv.writer(file)
         writer.writerow([timestamp, event, COP_x, COP_y, total_pressure])
 
-def get_event_data(filepath, event):
-    # List to store event data
+
+def read_csv_data(filepath):
+    # List to store all data
+    data = []
+
+    # Read data from CSV file
+    with open(filepath, mode="r", newline="") as file:
+        reader = csv.reader(file)
+        headers = next(reader)  # Skip header row
+        for row in reader:
+                data.append(row)
+
+    return data
+
+def get_csv_event(filepath, event):
+    # List to store specific event data
     event_data = []
 
     # Read data from CSV file
@@ -75,17 +109,10 @@ def get_event_data(filepath, event):
     return event_data
 
 
-
-# Example usage for function "get_event_data":
-# filepath = "tug_test_DS_date.csv"
-# event = "Walk1"
-# data = get_event_data(filepath, event)
-# print("Event data:")
-# for row in data:
-#     print(row)
-        
-# Example usage for function "write_to_csv":
-# file_path = "tug_test_DS_date"
-# filepath = create_unique_filepath("DS")
-# write_to_csv(filepath, "2023-10-27 15:02:16.200000+02:00", "Walk1", 1, 1, 6000, 50)
-# print(filepath)
+# EXAMPLE usage for function "get_csv_event":
+    # filepath = "MALISA_Python/tug_event_data/tug_[initials]_[test].csv"
+    # event = "Walk1"
+    # data = get_event_data(filepath, event)
+    # print("Event data:")
+    # for row in data:
+    #     print(row)
