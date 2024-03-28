@@ -124,21 +124,10 @@ def estimate_gait(metrics, walk_nr, filepath_TED):
 
     if((current_max_pressure > threshold_heal and (y_dis > y_dis_high or y_dis < y_dis_low)) or 
        (total_pressure > threshold_heal_special and max_y_of_step > y_min and y_dis > y_dis_high or y_dis < y_dis_low)): # Special case for the begining of the test and turn 1
-        #if (placement == Placement.left):
-            write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.heel, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
-
-        #else:
-  #          event = Tug_Event.heel
-        #write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.heel, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
 
     elif (1600 < current_max_pressure < 2900 and y_dis <= 12):
-       # if (placement == Placement.left):
-            write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.foot, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
-
-        #else:
-        #    event = Tug_Event.right_foot
-       # write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
-
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.foot, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
 
 def estimate_placement(walk_nr, mat, x):
 # x is the coordinate holding max pressure
