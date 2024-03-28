@@ -53,7 +53,7 @@ def create_filepath(initials, test):
 def create_csv_file(filepath):
     # Define (new) CSV file's header
     # | timestamp | event | COP x | COP y | total pressure |
-    headers = ["timestamp", "event", "COP_x", "COP_y", "total_pressure"]  
+    headers = ["timestamp", "event","placement", "COP_x", "COP_y", "total_pressure"]  
     # filepath = create_filepath(initials, test)
 
     # Check if the filepath already exists, if it does, return filepath
@@ -70,7 +70,7 @@ def create_csv_file(filepath):
     return filepath
     
 
-def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure):
+def write_to_csv(filepath, timestamp, event, placement,COP_x, COP_y, total_pressure):
     # Check if the file exists, if not, create it with headers
     # if not os.path.exists(filepath):
     #    create_csv_file(filepath)
@@ -78,9 +78,9 @@ def write_to_csv(filepath, timestamp, event, COP_x, COP_y, total_pressure):
     # Write data to CSV file
     with open(filepath, mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([timestamp, event, COP_x, COP_y, total_pressure])
+        writer.writerow([timestamp, event, placement,COP_x, COP_y, total_pressure])
 
-
+# TODO
 def read_csv_data(filepath):
     # List to store all data
     data = []

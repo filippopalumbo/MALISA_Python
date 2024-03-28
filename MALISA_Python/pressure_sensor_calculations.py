@@ -162,4 +162,22 @@ def calc_y_distance_single_frame(frame):
 
     return distance_y
 
+def find_min_and_max_y_of_step(frames):
+    # This method finds the highest(max) and lowest(min) y coordinate with a sensor value > 0,
+    # Y coordinates pending between 79 as higest and 0 as lowest
+    # In other terms, it finds the end and start of a foot or step.  
+    # OBS. Works only with two frames
+    min_y_of_step = [0,0]
+    max_y_of_step = [0,0]
+
+    nonzero_coords_frame_1 = np.transpose(np.nonzero(frames[0]))
+    nonzero_coords_frame_2 = np.transpose(np.nonzero(frames[1]))
+    if len(nonzero_coords_frame_1) > 0:
+        max_y_coord_of_step = tuple(nonzero_coords_frame_1[-1])
+        min_y_of_step = tuple(nonzero_coords_frame_1[0])
+    elif len(nonzero_coords_frame_2) > 0:
+        max_y_coord_of_step = tuple(nonzero_coords_frame_2[-1])
+        min_y_of_step = tuple(nonzero_coords_frame_2[0])
+    
+    return min_y_of_step[0], max_y_of_step[0] # [0] to return only y-coord
 
