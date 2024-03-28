@@ -10,9 +10,10 @@ from plotly.subplots import make_subplots
 # Thresholds
 threshold_seat = 3600
 threshold_heal = 4000
-threshold_y = 60
+threshold_heal_special = 40000
 y_dis_low = 5
 y_dis_high = 20
+y_min = 60
 
 
 def load_files(floor1_file_path, floor2_file_path, seat_file_path):
@@ -29,7 +30,6 @@ def load_files(floor1_file_path, floor2_file_path, seat_file_path):
     floor2_array[floor2_array < 400] = 0
     seat_array[seat_array < 100] = 0
 
-    # Keep one df as a "timestamp list" - to retrieve timestamp on correct frame-index
     timestamp_list = floor1_df
 
     return timestamp_list, floor1_array, floor2_array, seat_array
@@ -39,34 +39,31 @@ def on_prep(metrics, filepath_TED):
     
     if(seat_total_pressure < threshold_seat):
         # If total pressure on seat is below threshold T_sit_to_stand then log event stand
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.start, None, None, None)
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.stand, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.start, None, None, None, None)
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.stand, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.stand
     else:
         return Tug_State.prep
     
 def on_stand(metrics, filepath_TED):
-    cop_y = metrics['cop_y']
+    min_y_of_step = metrics['min_y_of_step']
 
-    if(cop_y < threshold_y):
+    if (min_y_of_step < y_min):
         # If current total pressure is reaching max pressure threshold, 
         # then logg walk because it indicates first valid heel after standing position
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.walk1, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.walk1, None,metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk1
     else:
         # Else logg that we are still in stand state
         return Tug_State.stand
 
 def on_walk_1(metrics, filepath_TED):
-    cop_y = metrics['cop_y']
-
+    min_y_of_step = metrics['min_y_of_step']
+    
     # The first walk during TUG (walking away from the chair)
-    if (cop_y > threshold_y):
+    if (min_y_of_step > y_min):
         # Indicates that we are now turning around to start walking back
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn1, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn1, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.turn1
     else:
         # Still walking, estimate and log heel or foot
@@ -74,14 +71,13 @@ def on_walk_1(metrics, filepath_TED):
         return Tug_State.walk1
 
 def on_walk_2(metrics, filepath_TED):
-    cop_y = metrics['cop_y']
-    event = {}
+    max_y_of_step = metrics['max_y_of_step']
+    mat_nr = metrics['mat_nr']
 
      # On second walk (walk back)
-    if(cop_y > threshold_y):
+    if(max_y_of_step > 70 and mat_nr == 1):
         # Indicates that we are now turning around to evantually sit down
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn2, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn2, None ,metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.turn2
     else:
         # Still walking, estimate and log heel or foot
@@ -89,13 +85,12 @@ def on_walk_2(metrics, filepath_TED):
         return Tug_State.walk2
 
 def on_turn_1(metrics, filepath_TED):
-    cop_y = metrics['cop_y']
+    y_distance = metrics['y_distance']
 
     # First turn during TUG (turning at the end of the walkway to walk back to the chair)
-    if(cop_y < threshold_y):
+    if(y_distance > 20):
         # Indicates that we started walking again after turning
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.walk2, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.walk2, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk2
     else:
         # Still turning 
@@ -107,41 +102,42 @@ def on_turn_2(metrics, filepath_TED):
     # Second turn during TUG (turning to sit back down)
     if(pressure_on_seat > threshold_seat):
         # Indicates that we are done turning and now sitting
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.sit, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+        write_to_csv(filepath_TED, metrics['timestamp'],Tug_Event.sit, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.sit
     else:
         # Still turning 
         return Tug_State.turn2
 
 def on_sit(metrics, filepath_TED):
-    # log 
-    write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.end, None, None, None)
+    write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.end, None, None, None, None)
     return 0,0
 
 def estimate_gait(metrics, walk_nr, filepath_TED):
-    x_cord_max_pressure = metrics['x_cord_max_pressure']
+    x_max_pressure = metrics['x_max_pressure']
     current_max_pressure = metrics['max_pressure']
+    total_pressure = metrics['total_pressure']
     y_dis = metrics['y_distance']
     mat_nr = metrics['mat_nr']
+    max_y_of_step = metrics['max_y_of_step']
     event = None
-    placement = estimate_placement(walk_nr, mat_nr, x_cord_max_pressure) # right or left
+    placement = estimate_placement(walk_nr, mat_nr, x_max_pressure) # right or left
 
-    if(current_max_pressure > threshold_heal and (y_dis > y_dis_high or y_dis < y_dis_low)):
-        if (placement == Placement.left):
-            event = Tug_Event.left_heel
-        else:
-            event = Tug_Event.right_heel
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+    if((current_max_pressure > threshold_heal and (y_dis > y_dis_high or y_dis < y_dis_low)) or 
+       (total_pressure > threshold_heal_special and max_y_of_step > y_min and y_dis > y_dis_high or y_dis < y_dis_low)): # Special case for the begining of the test and turn 1
+        #if (placement == Placement.left):
+            write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.heel, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+
+        #else:
+  #          event = Tug_Event.heel
+        #write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
 
     elif (1600 < current_max_pressure < 2900 and y_dis <= 12):
-        if (placement == Placement.left):
-            event = Tug_Event.left_foot
-        else:
-            event = Tug_Event.right_foot
-        # LOG
-        write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+       # if (placement == Placement.left):
+            write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.foot, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
+
+        #else:
+        #    event = Tug_Event.right_foot
+       # write_to_csv(filepath_TED, metrics['timestamp'], event, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
 
 
 def estimate_placement(walk_nr, mat, x):
@@ -179,21 +175,12 @@ def calculate_metrics(floor_frames, seat_frame):
     metrics['cop_x'], metrics['cop_y'], metrics['mat_nr'] = calc_cop(floor_frames)
     metrics['total_pressure'] = calc_total_pressure(floor_frames)
     metrics['seat_total_pressure'] = calc_total_pressure(seat_frame)
-    metrics['max_pressure'], metrics['x_cord_max_pressure'] = find_max_pressure(floor_frames)
+    metrics['max_pressure'], metrics['x_max_pressure'] = find_max_pressure(floor_frames)
     metrics['pressure_area'] = calc_area(floor_frames)
     metrics['y_distance'] = calc_y_distance(floor_frames)
-    
+    metrics['min_y_of_step'], metrics['max_y_of_step'] = find_min_and_max_y_of_step(floor_frames) 
+
     return metrics
-
-def create_event_table(timestamp, event, cop_x, cop_y):
-    event_table = {}
-
-    event_table['timestamp'] = timestamp
-    event_table['event'] = event
-    event_table['cop_x'] = cop_x
-    event_table['cop_y'] = cop_y
-
-    return event_table
 
 def run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED):
     index = 0
@@ -289,7 +276,9 @@ def create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame):
     st.plotly_chart(fig)
 
 def create_table(metrics):
-    info = [('timestamp', metrics['timestamp'][:21]), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), ('seat total pressure', metrics['seat_total_pressure']), ('floor maximum pressure', metrics['max_pressure']), ('Y distance', metrics['y_distance']), ('X-cord (max pres.)', metrics['x_cord_max_pressure'])]
+    info = [('timestamp', metrics['timestamp'][:21]), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), 
+            ('seat total pressure', metrics['seat_total_pressure']), ('floor maximum pressure', metrics['total_pressure']), ('Y distance', metrics['y_distance']), 
+            ('X-coord (max pres.)', metrics['x_max_pressure']), ('Y-coord (min y of step)', metrics['min_y_of_step']), ('Y-coord (max y of step)', metrics['max_y_of_step'])]
     info = pd.DataFrame(info, columns=['Metric', 'Value'])
     st.table(info)
 
