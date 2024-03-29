@@ -60,23 +60,23 @@ def str_to_epoch(str_time):
     return epoch_time
 
 def calc_gait_parameters(events):
+    # Split the dataframe at turn1 (to separate the walk1 ad walk2)
 
     # Find the index i of the row with the first heel-event
     # Save the placement p of row at the found index as current-state (left/right) 
     # Initialise a boolean for indicating if we are currently calc step and stride (1/0) = y/n
-    # 
+
     # Iterate through each row (starting from the found index)
+    # (if state=)
     # If the row i+1 -> event=foot & placement=p and row i+2 -> event=toe & placement=p
     #        A full step!
     #        calculate support-time -> toe-time - heel-time
     #        save cop for foot as step-length-start and stride-length-start
     # next-state = left
-        
+    #    
     #         
 
-    breakpoint()
-
-"""  
+    """  
     # Count the number of instances where 'event' column has value 'Tug_Event.right_heel'
     # num_of_steps = (events['event'] == 'Tug_Event.right_heel').sum()
     
