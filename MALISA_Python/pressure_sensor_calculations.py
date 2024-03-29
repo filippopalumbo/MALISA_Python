@@ -1,3 +1,23 @@
+"""
+Summary:
+This Python script contains functions to perform various operations in order to calculate 
+metrics about the pressure information on each sensor mat of a TUG test (1 seat mat, and 2 floor mats).
+
+Purpose:
+The purpose of this module is to provide a library of operations that can be imported and used
+during a TUG test in order to control the state-machine and log information. 
+
+Contents:
+list methods...
+
+Usage:
+Import this file into your Python script using 'import pressure_sensor_calculations'.
+You can then call the functions provided in this file to calculate metrics.
+
+Author: [Malin Ramkull & Hedda Eriksson]
+Date: [Date of creation or last modification]
+"""
+
 import numpy as np
 import pandas as pd
 
