@@ -20,59 +20,10 @@ from csv_handler import*
 from collections import defaultdict
 from enumerations.tug_events import *
 
+
 def clean_gait_events():
     # each scenario is explained in the bottom of this module.
-    filepath = "MALISA_Python/tug_event_data/tug_DS_test1_mod.csv"
-    data = read_csv_data(filepath)
-    cleaned_data = []
-    event = None
-    previous_event = None
-    next_event = None
-    r = 0
-
-    for row in data:
-        event = Tug_Event(row['event'])
-        if (r < (len(data)-1)):
-            next_event = Tug_Event(data[r+1]['event'])
-        # Scenario 1
-        if (event == Tug_Event.start or event == Tug_Event.stand or event == Tug_Event.walk1):
-            # Add row in data to cleaned_data
-            cleaned_data.append(row)
-        # Scenario 2 heel
-        elif (event == Tug_Event.heel and (previous_event == Tug_Event.walk1 or previous_event == Tug_Event.walk2)):
-            cleaned_data.append(row)
-        # Scenario 3 heel - no heel exists
-        elif(event == Tug_Event.foot and previous_event == Tug_Event.walk1):
-            row['event'] = Tug_Event.heel # modify data foot event -> heel event
-            cleaned_data.append(row)
-        # Scenario 4 heel - one or more heels exists 
-        elif(previous_event == Tug_Event.foot and event == Tug_Event.heel and (next_event == Tug_Event.heel or next_event == Tug_Event.foot)):
-            cleaned_data.append(row)
-        # Scenario 5 foot 
-        # elif(event == Tug_Event.foot and previous_event == Tug_Event.heel):
-        #     i = r
-        #     foot_data = [] 
-        #     while (i < len(data) and Tug_Event(data[i]['event']) == Tug_Event.foot):
-        #         foot_data.append(data[i])
-        #         i += 1
-            
-        #     cleaned_data.append(save_highest_pressure(foot_data)) # Save as foot
-        #     last_row = (len(foot_data)-1)
-        #     foot_data[last_row]['event'] = Tug_Event.toe # Modify data, foot event -> toe event
-        #     cleaned_data.append(foot_data[last_row]) # Save as toe 
-
-
-        previous_event = event
-        r += 1
-
-    for row in cleaned_data:
-        print(row)
-    # filepath = "MALISA_Python/tug_event_data/mod_tug_DS_test1.csv"
-    # write_csv_from_dict(filepath, cleaned_data)
-    return cleaned_data
-
-def clean_gait_events_v2():
-    # each scenario is explained in the bottom of this module.
+    # TODO send filepath as a parameter perhaps? 
     filepath = "MALISA_Python/tug_event_data/tug_DS_test2.csv"
     data = read_csv_data(filepath)
     cleaned_data = []
@@ -116,11 +67,13 @@ def clean_gait_events_v2():
                 i += 1
             
             last_row = len(foot_data)
+            # Scenario 5.1 foot
             if (len(foot_data) > 1):
                 toe = foot_data.pop() # remove toe from foot
                 toe['event'] = Tug_Event.toe  # Modify data, foot event -> toe event
                 cleaned_data.append(save_highest_pressure(foot_data))  # Save as foot
                 cleaned_data.append(toe) # Save as toe
+            #Scenario 5.2 foot
             else:
                 toe_data = foot_data[0].copy()
                 cleaned_data.append(foot_data[0])
@@ -131,11 +84,9 @@ def clean_gait_events_v2():
             step = last_row # skip all next subsequent feet, they have been taking in to account in this scenario
                         
         row += step
-        previous_event = Tug_Event(cleaned_data[len(cleaned_data)-1]['event'])
+        previous_event = Tug_Event(cleaned_data[len(cleaned_data)-1]['event']) 
 
-
-    # for row in cleaned_data:
-    #     print(row)
+    # TODO work some more on the saving function 
     filepath = "MALISA_Python/tug_event_data/2mod_tug_DS_test2.csv"
     write_csv_from_dict(filepath, cleaned_data)
     return cleaned_data
@@ -158,14 +109,11 @@ def save_highest_pressure(foot_data):
 # TODO
 def control_placements():
     #control all placements (left and right) and correct errors
-    filepath = "MALISA_Python/tug_event_data/tug_DS_test2.csv"
-    data = read_csv_data(filepath)
-    cleaned_data = []
-    
+
     return
 
 def main():
-    data = clean_gait_events_v2()
+    data = clean_gait_events()
     # print("Event data:")
     # for row in data:
     #     print(row)
@@ -182,53 +130,10 @@ This makes sure we only save one heel(the first one) if there is one or more hee
 Scenario 3 heel: If tug state machine missed a heel, this will make the first footprint into a heel in th enew modified file.
 
 Scenario 4 heel: If tug state machine saved one or more heels, save the first heel in the sequence.
+
+Scenario 5 foot: seperates foot and toe
+    Scenario 5.1 foot: if there is more then one foot event saved, clear out all except the foot with the highest pressure, 
+    and the last foot in the subsequence as toe.
+    Scenario 5.2 foot: if there is only one frame, dublicate and make one foot and one toe.
 """
 
-
-    # sequences = []
-    # current_sequence = []
-    # for row in data:
-    #     if row['event'] == 'Tug_Event.foot':
-    #         current_sequence.append(row)
-    #     else:
-    #         if current_sequence:
-    #             sequences.append(current_sequence)
-    #             current_sequence = []
-
-    # cleaned_data = []
-    # for sequence in sequences:
-    #     # Save the last Tug_Event_foot as Tug_Event_toe
-    #     last_foot_event = sequence[-1]
-    #     last_foot_event['event'] = 'Tug_Event.toe'
-    #     cleaned_data.append(last_foot_event)
-
-    #     # Select the entry with the highest total_pressure
-    #     max_pressure_event = max(sequence, key=lambda x: float(x['total_pressure']))
-    #     cleaned_data.append(max_pressure_event)
-
-    # Group data by event type
-    # event_groups = defaultdict(list)
-    # for row in data:
-    #     event_groups[row['event']].append(row)
-
-    # # Modify Tug_Event_foot entries
-    # modified_data = []
-    # for event, group in event_groups.items():
-    #     if event.startswith('Tug_Event.foot'):
-    #         # Select the last occurrence as Tug_Event_toe
-    #         last_foot = group[-1].copy()
-    #         last_foot['event'] = 'Tug_Event.toe'
-    #         modified_data.append(last_foot)
-
-    #         # Select the entry with the highest total_pressure
-    #         max_pressure_foot = max(group, key=lambda x: float(x['total_pressure'])).copy()
-    #         modified_data.append(max_pressure_foot)
-    #     else:
-    #         modified_data.extend(group)
-
-        # elif (event == Tug_Event.heel):
-        #     next_event = Tug_Event(data[r+1]['event'])
-            
-        #     if(next_event == Tug_Event.foot and previous_event == Tug_Event.walk1):
-        #         cleaned_data.append(row)
-        #     elif(previous_event == Tug_Event.walk1):
