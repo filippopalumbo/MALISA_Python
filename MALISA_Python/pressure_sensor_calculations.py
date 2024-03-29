@@ -193,10 +193,10 @@ def find_min_and_max_y_of_step(frames):
     nonzero_coords_frame_1 = np.transpose(np.nonzero(frames[0]))
     nonzero_coords_frame_2 = np.transpose(np.nonzero(frames[1]))
     if len(nonzero_coords_frame_1) > 0:
-        max_y_coord_of_step = tuple(nonzero_coords_frame_1[-1])
+        max_y_of_step = tuple(nonzero_coords_frame_1[-1])
         min_y_of_step = tuple(nonzero_coords_frame_1[0])
     elif len(nonzero_coords_frame_2) > 0:
-        max_y_coord_of_step = tuple(nonzero_coords_frame_2[-1])
+        max_y_of_step = tuple(nonzero_coords_frame_2[-1])
         min_y_of_step = tuple(nonzero_coords_frame_2[0])
     
     return min_y_of_step[0], max_y_of_step[0] # [0] to return only y-coord
