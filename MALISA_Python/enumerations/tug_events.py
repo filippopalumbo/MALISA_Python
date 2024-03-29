@@ -1,18 +1,18 @@
 from enum import Enum
 
 class Tug_Event(Enum):
-    heel = 1
-    foot = 2
-    toe = 3
-    stand = 4
-    sit = 5
-    walk1 = 6
-    walk2 = 7
-    turn1 = 8
-    turn2 = 9
-    start = 10
-    end = 11
+    heel = 'Tug_Event.heel'
+    foot = 'Tug_Event.foot'
+    toe = 'Tug_Event.toe'
+    stand = 'Tug_Event.stand'
+    sit = 'Tug_Event.sit'
+    walk1 = 'Tug_Event.walk1'
+    walk2 = 'Tug_Event.walk2'
+    turn1 = 'Tug_Event.turn1'
+    turn2 = 'Tug_Event.turn2'
+    start = 'Tug_Event.start'
+    end = 'Tug_Event.end'
 
 class Placement(Enum):
-    left = 1
-    right = 2
+    left = 'Placement.left'
+    right = 'Placement.right'

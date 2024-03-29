@@ -68,7 +68,18 @@ def create_csv_file(filepath):
         
     print("CSV file successfully created")
     return filepath
-    
+
+
+def write_csv_from_dict(filepath, data):
+    """
+    Write dictonary to a CSV file.
+    """
+    headers = data[0].keys()
+    with open(filepath, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(data)
+
 
 def write_to_csv(filepath, timestamp, event, placement,COP_x, COP_y, total_pressure):
     # Check if the file exists, if not, create it with headers
@@ -80,17 +91,20 @@ def write_to_csv(filepath, timestamp, event, placement,COP_x, COP_y, total_press
         writer = csv.writer(file)
         writer.writerow([timestamp, event, placement,COP_x, COP_y, total_pressure])
 
-# TODO
+
 def read_csv_data(filepath):
     # List to store all data
     data = []
-
     # Read data from CSV file
-    with open(filepath, mode="r", newline="") as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Skip header row
+    # with open(filepath, mode="r", newline="") as file:
+    #     reader = csv.reader(file)
+    #     headers = next(reader)  # Skip header row
+    #     for row in reader:
+    #             data.append(row)
+    with open(filepath, 'r') as file:
+        reader = csv.DictReader(file)
         for row in reader:
-                data.append(row)
+            data.append(row)
 
     return data
 
@@ -116,3 +130,11 @@ def get_csv_event(filepath, event):
     # print("Event data:")
     # for row in data:
     #     print(row)
+# def main():
+#     filepath = "MALISA_Python/tug_event_data/tug_DS_test1.csv"
+#     data = read_csv_data(filepath)
+#     print("Event data:")
+#     for row in data:
+#         print(row)
+
+# main()
