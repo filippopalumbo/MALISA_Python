@@ -1,5 +1,5 @@
 import pandas as pd
-from pressure_sensor_calculations import *
+from test_sensor_calculations import *
 from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
@@ -9,11 +9,10 @@ from plotly.subplots import make_subplots
 
 # Thresholds
 threshold_seat = 3600
-threshold_heal = 4000
-threshold_heal_special = 40000
+threshold_heal = 2600
 y_dis_low = 5
 y_dis_high = 20
-y_walk_max = 60
+y_start_max = 60
 
 
 def load_files(floor1_file_path, floor2_file_path, seat_file_path):
@@ -30,9 +29,15 @@ def load_files(floor1_file_path, floor2_file_path, seat_file_path):
     floor2_array[floor2_array < 500] = 0
     seat_array[seat_array < 100] = 0
 
+    # special handling of seat. Was this one places in the wrong direction?
+    seat_array = np.rot90(seat_array, 2, (1,2))
+    # special handling of floor2. Placed in opposite direction
+    floor2_array = np.rot90(floor2_array, 2, (1,2))
+    floor_array = np.concatenate((floor2_array, floor1_array), axis=1)
+
     timestamp_list = floor1_df
 
-    return timestamp_list, floor1_array, floor2_array, seat_array
+    return timestamp_list, floor_array, seat_array
 
 def on_prep(metrics, filepath_TED):
     seat_total_pressure = metrics['seat_total_pressure']
@@ -59,90 +64,67 @@ def on_stand(metrics, filepath_TED):
 
 def on_walk_1(metrics, filepath_TED):
     y_first_coord = metrics['y_first_coord']
-    x_max_pressure = metrics['x_max_pressure']
+    y_last_coord = metrics['y_last_coord']
+    x_max_pressure = metrics['x_coord_max_pressure']
+    y_max_pressure = metrics['y_coord_max_pressure']
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
     right_side_total_pressure = metrics['right_side_total_pressure'] 
-    mat_nr = metrics['mat_nr']
+
     # The first walk during TUG (walking away from the chair)
-    if (y_first_coord > y_walk_max and mat_nr==2):
-        # Indicates that we are now turning around to start walking back
+    if (y_last_coord < 20):
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn1, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.turn1
     else:
         event = None
         placement = None
-        if(max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
+        distance_max_y_to_last_y = abs(y_max_pressure - y_last_coord)
+        distance_max_y_to_first_y = abs(y_max_pressure - y_first_coord)
+        if((max_pressure > threshold_heal) and (distance_max_y_to_first_y < distance_max_y_to_last_y)): 
             event = Tug_Event.heel
-            if(mat_nr == 1):
-                if(x_max_pressure < 14):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
+            if(x_max_pressure < 14):
+                placement = Placement.right
             else:
-                if(x_max_pressure > 14):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
-
+                placement = Placement.left
         else:
             event = Tug_Event.foot
-            if(mat_nr == 1):
-                if(right_side_total_pressure > left_side_total_pressure):
-                    placement = Placement.left
-                else:
-                    placement = Placement.right
-            else:
-                if(right_side_total_pressure > left_side_total_pressure):
-                    placement = Placement.left
-                else:
-                    placement = Placement.right
-        
-        write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
 
+            if(right_side_total_pressure > left_side_total_pressure):
+                placement = Placement.right
+            else:
+                placement = Placement.left
+        write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk1
 
 def on_walk_2(metrics, filepath_TED):
+    y_first_coord = metrics['y_first_coord']
     y_last_coord = metrics['y_last_coord']
-    x_max_pressure = metrics['x_max_pressure']
+    x_max_pressure = metrics['x_coord_max_pressure']
+    y_max_pressure = metrics['y_coord_max_pressure']
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
     right_side_total_pressure = metrics['right_side_total_pressure'] 
-    mat_nr = metrics['mat_nr']
-     # On second walk (walk back)
-    if(y_last_coord > y_walk_max and mat_nr == 1):
-        # Indicates that we are now turning around to evantually sit down
+
+    if(y_first_coord > 140):
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn2, None ,metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.turn2
     else:
         event = None
         placement = None
-        if(max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
+        distance_max_y_to_last_y = abs(y_max_pressure - y_last_coord)
+        distance_max_y_to_first_y = abs(y_max_pressure - y_first_coord)
+        if((max_pressure > threshold_heal) and (distance_max_y_to_last_y < distance_max_y_to_first_y)): # Special case for the begining of the test and turn 1
             event = Tug_Event.heel
-            if(mat_nr == 1):
-                if(x_max_pressure > 14):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
+            if(x_max_pressure > 14):
+                placement = Placement.right
             else:
-                if(x_max_pressure < 14):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
-
+                placement = Placement.left
         else:
             event = Tug_Event.foot
-            if(mat_nr == 1):
-                if(right_side_total_pressure > left_side_total_pressure):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
+            if(right_side_total_pressure > left_side_total_pressure):
+                placement = Placement.left
             else:
-                if(right_side_total_pressure > left_side_total_pressure):
-                    placement = Placement.right
-                else:
-                    placement = Placement.left
-        
+                placement = Placement.right       
         write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk2
 
@@ -174,91 +156,16 @@ def on_sit(metrics, filepath_TED):
     write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.end, None, None, None, None)
     return 0,0
 
-# NOT USED ATM
-def estimate_gait(metrics, walk_nr, filepath_TED):
-    x_max_pressure = metrics['x_max_pressure']
-    current_max_pressure = metrics['max_pressure']
-    left_side_total_pressure = metrics['left_side_total_pressure']
-    right_side_total_pressure = metrics['right_side_total_pressure'] 
-    total_pressure = metrics['total_pressure']
-    y_dis = metrics['y_distance']
-    mat_nr = metrics['mat_nr']
-    max_y_of_step = metrics['max_y_of_step']
-    event = None
-    placement = None
-
-    if(current_max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
-        event = Tug_Event.heel
-        if(mat_nr == 1):
-            if(x_max_pressure < 14):
-                placement = Placement.right
-            else:
-                placement = Placement.left
-        else:
-            if(x_max_pressure > 14):
-                placement = Placement.right
-            else:
-                placement = Placement.left
-
-    else:
-        event = Tug_Event.foot
-        if(mat_nr == 1):
-            if(left_side_total_pressure > right_side_total_pressure):
-                placement = Placement.right
-            else:
-                placement = Placement.left
-        else:
-            if(right_side_total_pressure > left_side_total_pressure):
-                placement = Placement.right
-            else:
-                placement = Placement.left
-    
-    write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
-
-# NOT USED ATM
-def estimate_placement(walk_nr, mat, x):
-# x is the coordinate holding max pressure
-    if (walk_nr == 1 and mat == 1):
-        if x >= 14:
-            return Placement.left
-        elif x < 14:
-            return Placement.right
-                
-    elif (walk_nr == 1 and mat == 2):
-        if x >= 14:
-            return Placement.right
-        elif x < 14:
-            return Placement.left
-        
-    elif (walk_nr == 2 and mat == 2):
-        if x < 14:
-            return Placement.right
-        elif x >= 14:
-            return Placement.left
-                
-    elif (walk_nr == 2 and mat == 1):
-        if x < 14:
-            return Placement.left
-        elif x >= 14:
-            return Placement.right
-    
-    return None
-
-def calculate_metrics(floor_frames, seat_frame):
+def calculate_metrics(floor_frame, seat_frame):
     metrics = {}
     
     # Calculate and store metrics in dictionary
-    metrics['cop_x'], metrics['cop_y'], metrics['mat_nr'] = calc_cop(floor_frames)
-    metrics['total_pressure'] = calc_total_pressure(floor_frames)
+    metrics['cop_x'], metrics['cop_y'] = calc_cop(floor_frame)
+    metrics['total_pressure'] = calc_total_pressure(floor_frame)
     metrics['seat_total_pressure'] = calc_total_pressure(seat_frame)
-    metrics['max_pressure'], metrics['x_max_pressure'] = find_max_pressure(floor_frames)
-    metrics['pressure_area'] = calc_area(floor_frames)
-    metrics['y_distance'], metrics['y_first_coord'], metrics['y_last_coord'] = calc_y_distance(floor_frames)
-    metrics['left_side_total_pressure'], metrics['right_side_total_pressure'] = calc_split_frame_total_pressure(floor_frames)
-
-    if(metrics['max_pressure'] > threshold_heal):
-        max_pressure, mat_nr = calc_max_pressure(floor_frames)
-        metrics['mat_nr'] = mat_nr
+    metrics['max_pressure'], metrics['x_coord_max_pressure'], metrics['y_coord_max_pressure'] = calc_max_pressure(floor_frame)
+    metrics['y_distance'], metrics['y_first_coord'], metrics['y_last_coord'] = calc_y_distance(floor_frame)
+    metrics['left_side_total_pressure'], metrics['right_side_total_pressure'] = calc_separate_side_total_pressure(floor_frame)
 
     return metrics
 
@@ -267,19 +174,16 @@ def run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED):
     current_state = Tug_State.prep
     next_state = Tug_State.prep
 
-    timestamp_list, floor1_array, floor2_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
+    timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
     while index < len(timestamp_list):
-        floor1_frame = floor1_array[index, :, :]
-        floor2_frame = floor2_array[index, :, :]
+        floor_frame = floor_array[index, :, :]
         seat_frame = seat_array[index, :, :] 
 
         # Create dictionary with metrics
-        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
+        metrics = calculate_metrics(floor_frame, seat_frame)
         metrics['timestamp'] = timestamp_list.loc[index, 'timestamp'] 
         next_state= get_next_state(current_state, metrics, filepath_TED)
-        
-        # Here -> save event_table in csv file
         
         current_state = next_state
         index += 1
@@ -332,33 +236,41 @@ def get_file_paths(test):
 
     return file_path_mat1, file_path_mat2, file_path_seat 
 
-def create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame):
+def create_heatmaps_and_plot(floor_frame, seat_frame):
     # Create subplots for both floor mats and seat mat
-    fig = make_subplots(rows=1, cols=3, column_widths=[200, 280, 280], row_heights=[800])
+    fig = make_subplots(rows=2, cols=1, row_heights=[150, 1200])
 
     # 12 bits gives a resolution of 4096 values, including 0 -> 4095
     fig.add_trace(go.Heatmap(z=seat_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=1)
-    fig.add_trace(go.Heatmap(z=floor1_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=2)
-    fig.add_trace(go.Heatmap(z=floor2_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=3)
+    fig.add_trace(go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=2, col=1)
 
     # Update layout
-    fig.layout.height = 800
-    fig.layout.width = (280 * 2) + 200
-    # Adjust the heights of specific rows
-    fig.update_layout(
-        yaxis1=dict(domain=[0, 200/800]),  # Adjust the height of the first row
-        yaxis2=dict(domain=[0, 800/800]),  # Adjust the height of the second row
-        yaxis3=dict(domain=[0, 800/800])   # Adjust the height of the third row
-    )
-    fig.update_layout(showlegend=False)
+    fig.layout.height = 1350
+    fig.layout.width = 210
+    fig.update(layout_showlegend=False)
 
     # Show the plotly chart
     st.plotly_chart(fig)
 
+def plot_floor(floor_frame):
+    fig = go.Figure(data=go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'))
+    fig.update_layout(height=1600, width=280)  # Update layout properties
+    st.plotly_chart(fig)
+
 def create_table(metrics):
-    info = [('timestamp', metrics['timestamp'][:21]), ('cop X', metrics['cop_x']), ('cop Y', metrics['cop_y']), ('mat nr', metrics['mat_nr']), 
-            ('seat total pressure', metrics['seat_total_pressure']), ('floor maximum pressure', metrics['max_pressure']), ('Y distance', metrics['y_distance']), 
-            ('X-coord (max pres.)', metrics['x_max_pressure']), ('Y first coord', metrics['y_first_coord']), ('Y last coord', metrics['y_last_coord']), ('left side tot pressure', metrics['left_side_total_pressure']), ('right side tot pressure', metrics['right_side_total_pressure'])]
+    info = [('timestamp', metrics['timestamp'][:21]), 
+            ('cop X', metrics['cop_x']), 
+            ('cop Y', metrics['cop_y']), 
+            ('seat total pressure', metrics['seat_total_pressure']), 
+            ('floor total pressure', metrics['total_pressure']), 
+            ('floor maximum pressure', metrics['max_pressure']), 
+            ('X maximum pressure', metrics['x_coord_max_pressure']),
+            ('Y maximum pressure', metrics['y_coord_max_pressure']),
+            ('Y distance', metrics['y_distance']), 
+            ('Y first coord', metrics['y_first_coord']), 
+            ('Y last coord', metrics['y_last_coord']), 
+            ('left side tot pressure', metrics['left_side_total_pressure']), 
+            ('right side tot pressure', metrics['right_side_total_pressure'])]
     info = pd.DataFrame(info, columns=['Metric', 'Value'])
     st.table(info)
 
@@ -368,7 +280,7 @@ def main():
     file_path_mat1, file_path_mat2, file_path_seat = get_file_paths(test)
 
     # Load data for sensor floor mats
-    timestamp_list, floor1_array, floor2_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
+    timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
     # Create CSV file for test to save tug event data (TED) 
     filepath_TED = create_filepath('DS', test)
@@ -381,19 +293,20 @@ def main():
             run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
 
     if mode == 'Visual Analysis':
+        col1, col2 = st.columns([3, 2])  # Ratio of column widths
+        with col1:
+            index = st.slider('Choose frame', 0, len(timestamp_list)-1, key='frame_slider')
 
-        index = st.slider('Choose frame', 0, len(timestamp_list)-1, key='frame_slider')
+            floor_frame = floor_array[index, :, :]
+            seat_frame = seat_array[index, :, :] 
 
-        floor1_frame = floor1_array[index, :, :]
-        floor2_frame = floor2_array[index, :, :]
-        seat_frame = seat_array[index, :, :] 
+            # Create dictionary with metrics
+            metrics = calculate_metrics(floor_frame, seat_frame)
+            metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
 
-        # Create dictionary with metrics
-        metrics = calculate_metrics([floor1_frame, floor2_frame], seat_frame)
-        metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
-
-        create_table(metrics)
-
-        create_heatmaps_and_plot(floor1_frame, floor2_frame, seat_frame)
+            create_table(metrics)
+        with col2:
+            #create_heatmaps_and_plot(floor_frame, seat_frame)
+            plot_floor(floor_frame)
 
 main()
