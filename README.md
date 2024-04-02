@@ -7,7 +7,7 @@ This application is designed to analyze TUG (Timed Up and Go) test data collecte
 1. **Run State Machine TUG Module**:
    - Execute the following command in your terminal:
      ```
-     streamlit run MALISA_Python/state_machine_tug.py
+     streamlit run MALISA_Python/state_machine.py
      ```
    
 2. **Run Visual Analysis Module**:
