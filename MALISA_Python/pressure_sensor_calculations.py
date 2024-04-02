@@ -28,6 +28,7 @@ def calc_total_pressure(frames):
     
     return total_pressure
 
+# NOT USED ATM
 def find_max_pressure(frames):
     max_pressure = 0
     current_max = 0
@@ -124,14 +125,14 @@ def calc_y_distance(frames):
     total_pressure_frame2 = np.sum(frames[1])
 
     if (total_pressure_frame1 == 0 and total_pressure_frame2 == 0):
-        return total_pressure
+        return total_pressure, 0, 0
     elif (total_pressure_frame1 > 0 and total_pressure_frame2 == 0):
         return calc_y_distance_single_frame(frames[0])
     elif (total_pressure_frame2 > 0 and total_pressure_frame1 == 0):
         return calc_y_distance_single_frame(frames[1])
     elif (total_pressure_frame1 > 0 and total_pressure_frame2 > 0):
         return (calc_y_distance_double_frame(frames[0], frames[1]))
-    return 0
+    return 0, 0, 0
 
 def calc_y_distance_double_frame(frame1, frame2):
     distance_y = 0
@@ -154,11 +155,12 @@ def calc_y_distance_double_frame(frame1, frame2):
     if mat1_coord is not None and mat2_coord is not None:
         distance_y = (mat1_coord[0] + mat2_coord[0])
     
-    return distance_y
+    return distance_y, 0, 0
 
 def calc_y_distance_single_frame(frame):
     distance_y = 0
-    #distance_x = 0
+    y_first_coord = 0
+    y_last_coord = 0
     
     # find coordinates of the first value > 0
     nonzero_coords = np.transpose(np.nonzero(frame))
@@ -177,11 +179,14 @@ def calc_y_distance_single_frame(frame):
     if first_coord is not None and last_coord is not None:
         # calculate distance between coordinates in y-axis
         distance_y = abs(last_coord[0] - first_coord[0])
+        y_first_coord = first_coord[0]
+        y_last_coord = last_coord[0]
         # calculate distance between coordinates in x-axis
         #distance_x = abs(last_coord[1] - first_coord[1])
 
-    return distance_y
+    return distance_y, y_first_coord, y_last_coord
 
+# NOT USED ATM
 def find_min_and_max_y_of_step(frames):
     # This method finds the highest(max) and lowest(min) y coordinate with a sensor value > 0,
     # Y coordinates pending between 79 as higest and 0 as lowest
@@ -201,3 +206,32 @@ def find_min_and_max_y_of_step(frames):
     
     return min_y_of_step[0], max_y_of_step[0] # [0] to return only y-coord
 
+def calc_split_frame_total_pressure(frames):
+    total_pressure = calc_total_pressure(frames)
+
+    # Slice frame 1 to keep columns 1-14 (left side of walkway)
+    left_side_frame_1 = frames[0][:, :14]    
+    
+    # Slice frame 2 to keep columns 15 to 28 (left wide of walkway)
+    left_side_frame_2 = frames[1][:, 14:]
+
+    # Calculate total pressure of each side of the walkway
+    total_pressure_left_side = left_side_frame_1.sum() + left_side_frame_2.sum()
+    total_pressure_right_side = total_pressure - total_pressure_left_side
+
+    return total_pressure_left_side, total_pressure_right_side
+
+def calc_max_pressure(frames):
+    max_pressure = 0
+    mat_nr = 0
+
+    frame_1_max_pressure = frames[0].max()
+    frame_2_max_pressure = frames[1].max()
+
+    if frame_1_max_pressure > frame_2_max_pressure:
+        max_pressure = frame_1_max_pressure
+        mat_nr = 1
+    else:
+        max_pressure = frame_2_max_pressure
+        mat_nr = 2
+    return max_pressure, mat_nr
