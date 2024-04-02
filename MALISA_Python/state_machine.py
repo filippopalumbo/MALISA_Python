@@ -1,5 +1,5 @@
 import pandas as pd
-from test_sensor_calculations import *
+from sensor_calculations import *
 from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
