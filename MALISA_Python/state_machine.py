@@ -124,7 +124,7 @@ def on_walk_2(metrics, filepath_TED):
             if(right_side_total_pressure > left_side_total_pressure):
                 placement = Placement.left
             else:
-                placement = Placement.right       
+                placement = Placement.right    
         write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk2
 
