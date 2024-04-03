@@ -1,6 +1,7 @@
 from enum import Enum
 
 class Tug_Event(Enum):
+    double_stance = 'Tug_Event.double_stance'
     heel = 'Tug_Event.heel'
     foot = 'Tug_Event.foot'
     toe = 'Tug_Event.toe'
