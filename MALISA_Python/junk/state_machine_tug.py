@@ -73,7 +73,7 @@ def on_walk_1(metrics, filepath_TED):
         event = None
         placement = None
         if(max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
-            event = Tug_Event.heel
+            event = Tug_Event.double_stance
             if(mat_nr == 1):
                 if(x_max_pressure < 14):
                     placement = Placement.right
@@ -118,7 +118,7 @@ def on_walk_2(metrics, filepath_TED):
         event = None
         placement = None
         if(max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
-            event = Tug_Event.heel
+            event = Tug_Event.double_stance
             if(mat_nr == 1):
                 if(x_max_pressure > 14):
                     placement = Placement.right
@@ -188,7 +188,7 @@ def estimate_gait(metrics, walk_nr, filepath_TED):
     placement = None
 
     if(current_max_pressure > threshold_heal): # Special case for the begining of the test and turn 1
-        event = Tug_Event.heel
+        event = Tug_Event.double_stance
         if(mat_nr == 1):
             if(x_max_pressure < 14):
                 placement = Placement.right

@@ -9,9 +9,9 @@ from plotly.subplots import make_subplots
 
 # Thresholds
 threshold_seat = 3600
-threshold_heal = 2600
+THRESHOLD_HEEL = 4000
 y_dis_low = 5
-y_dis_high = 20
+THRESHOLD_DOUBLE_STANCE = 20
 y_start_max = 60
 
 
@@ -53,7 +53,7 @@ def on_prep(metrics, filepath_TED):
 def on_stand(metrics, filepath_TED):
     y_distance = metrics['y_distance']
 
-    if (y_distance > y_dis_high):
+    if (y_distance > THRESHOLD_DOUBLE_STANCE):
         # If current total pressure is reaching max pressure threshold, 
         # then logg walk because it indicates first valid heel after standing position
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.walk1, None,metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
@@ -70,6 +70,7 @@ def on_walk_1(metrics, filepath_TED):
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
     right_side_total_pressure = metrics['right_side_total_pressure'] 
+    y_distance = metrics['y_distance']
 
     # The first walk during TUG (walking away from the chair)
     if (y_last_coord < 20):
@@ -78,14 +79,17 @@ def on_walk_1(metrics, filepath_TED):
     else:
         event = None
         placement = None
-        distance_max_y_to_last_y = abs(y_max_pressure - y_last_coord)
-        distance_max_y_to_first_y = abs(y_max_pressure - y_first_coord)
-        if((max_pressure > threshold_heal) and (distance_max_y_to_first_y < distance_max_y_to_last_y)): 
+        
+        if(max_pressure > THRESHOLD_HEEL): 
             event = Tug_Event.heel
             if(x_max_pressure < 14):
                 placement = Placement.right
             else:
                 placement = Placement.left
+
+        elif(y_distance > THRESHOLD_DOUBLE_STANCE):
+            event = Tug_Event.double_stance
+
         else:
             event = Tug_Event.foot
 
@@ -93,6 +97,7 @@ def on_walk_1(metrics, filepath_TED):
                 placement = Placement.right
             else:
                 placement = Placement.left
+
         write_to_csv(filepath_TED, metrics['timestamp'], event, placement, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.walk1
 
@@ -104,6 +109,7 @@ def on_walk_2(metrics, filepath_TED):
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
     right_side_total_pressure = metrics['right_side_total_pressure'] 
+    y_distance = metrics['y_distance']
 
     if(y_first_coord > 140):
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.turn2, None ,metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
@@ -111,14 +117,17 @@ def on_walk_2(metrics, filepath_TED):
     else:
         event = None
         placement = None
-        distance_max_y_to_last_y = abs(y_max_pressure - y_last_coord)
-        distance_max_y_to_first_y = abs(y_max_pressure - y_first_coord)
-        if((max_pressure > threshold_heal) and (distance_max_y_to_last_y < distance_max_y_to_first_y)): # Special case for the begining of the test and turn 1
+
+        if(max_pressure > THRESHOLD_HEEL): # Special case for the begining of the test and turn 1
             event = Tug_Event.heel
             if(x_max_pressure > 14):
                 placement = Placement.right
             else:
                 placement = Placement.left
+        
+        elif(y_distance > THRESHOLD_DOUBLE_STANCE):
+            event = Tug_Event.double_stance
+        
         else:
             event = Tug_Event.foot
             if(right_side_total_pressure > left_side_total_pressure):

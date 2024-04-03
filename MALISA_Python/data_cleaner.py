@@ -45,20 +45,20 @@ def clean_gait_events():
             cleaned_data.append(data[row])
             step = 1
         # Scenario 2 heel
-        elif (event == Tug_Event.heel and (previous_event == Tug_Event.walk1 or previous_event == Tug_Event.walk2 or previous_event == Tug_Event.toe)):
+        elif (event == Tug_Event.double_stance and (previous_event == Tug_Event.walk1 or previous_event == Tug_Event.walk2 or previous_event == Tug_Event.toe)):
             cleaned_data.append(data[row])
             step = 1
         # Scenario 3 heel - no heel exists
         elif(event == Tug_Event.foot and (previous_event == Tug_Event.walk1 or previous_event == Tug_Event.walk2 or previous_event == Tug_Event.toe)):
-            data[row]['event'] = Tug_Event.heel # modify data foot event -> heel event
+            data[row]['event'] = Tug_Event.double_stance # modify data foot event -> heel event
             cleaned_data.append(data[row])
             step = 1
         # Scenario 4 heel - one or more heels exists 
-        elif(previous_event == Tug_Event.foot and event == Tug_Event.heel and (next_event == Tug_Event.heel or next_event == Tug_Event.foot)):
+        elif(previous_event == Tug_Event.foot and event == Tug_Event.double_stance and (next_event == Tug_Event.double_stance or next_event == Tug_Event.foot)):
             cleaned_data.append(data[row])
             step = 1
         # Scenario 5 foot 
-        elif(event == Tug_Event.foot and previous_event == Tug_Event.heel):
+        elif(event == Tug_Event.foot and previous_event == Tug_Event.double_stance):
             i = row
             foot_data = []
             placement = Placement(data[row]['placement'])
