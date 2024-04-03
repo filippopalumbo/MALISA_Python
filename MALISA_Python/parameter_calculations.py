@@ -35,6 +35,9 @@ from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
 
+WALKWAY_LENGTH = 6.4
+
+# TUG parameters
 def calc_tug_time(events):
     start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
     end = events.loc[events['event'] == 'Tug_Event.sit', 'timestamp'].iloc[0]
@@ -48,6 +51,71 @@ def calc_tug_time(events):
     
     return tug_time
 
+def calc_stand_up_time(events):
+    return None
+
+def calc_turn_between_walks_time(events):
+    start = events.loc[events['event'] == 'Tug_Event.turn1', 'timestamp'].iloc[0]
+    end = events.loc[events['event'] == 'Tug_Event.walk2', 'timestamp'].iloc[0]
+
+    # Special handling for the test-files (time are of str-type, not epoch-type)
+    start = str_to_epoch(start)
+    end = str_to_epoch(end)
+    
+    # Calculate the time difference
+    turn_time = end - start
+    
+    return turn_time    
+
+def calc_turn_before_sit_time(events):
+    start = events.loc[events['event'] == 'Tug_Event.turn2', 'timestamp'].iloc[0]
+    end = events.loc[events['event'] == 'Tug_Event.sit', 'timestamp'].iloc[0]
+
+    # Special handling for the test-files (time are of str-type, not epoch-type)
+    start = str_to_epoch(start)
+    end = str_to_epoch(end)
+    
+    # Calculate the time difference
+    turn_time = end - start
+    
+    return turn_time
+
+# Gait parameters (that measures mobility and balance)
+def calc_walk_speed(events):
+    walk1_start = events.loc[events['event'] == 'Tug_Event.walk1', 'timestamp'].iloc[0]
+    walk1_end = events.loc[events['event'] == 'Tug_Event.turn1', 'timestamp'].iloc[0]
+
+    # Special handling for the test-files (time are of str-type, not epoch-type)
+    walk1_start = str_to_epoch(walk1_start)
+    walk1_end = str_to_epoch(walk1_end)
+    
+    # Calculate the time duration of the first walk
+    walk1_time = walk1_end - walk1_start
+
+    walk2_start = events.loc[events['event'] == 'Tug_Event.walk2', 'timestamp'].iloc[0]
+    walk2_end = events.loc[events['event'] == 'Tug_Event.turn2', 'timestamp'].iloc[0]
+
+    # Special handling for the test-files (time are of str-type, not epoch-type)
+    walk2_start = str_to_epoch(walk2_start)
+    walk2_end = str_to_epoch(walk2_end)
+    
+    # Calculate the time difference
+    walk2_time = walk2_end - walk2_start
+
+    walk_time = walk1_time + walk2_time
+
+    walk_speed = walk_time / 2 * WALKWAY_LENGTH
+
+    return walk_speed
+
+def stride_length():
+
+    return None
+
+## ON HOLD (Inaccurate with heels and toes...)
+def support_time():
+    return None
+
 def str_to_epoch(str_time):
     if len(str_time) < 26:
         str_time = str_time[:-6]
@@ -59,64 +127,11 @@ def str_to_epoch(str_time):
     epoch_time = datetime.datetime.strptime(str_time, timestamp_format)
     return epoch_time
 
-def calc_gait_parameters(events):
-    # Split the dataframe at turn1 (to separate the walk1 ad walk2)
-
-    # Find the index i of the row with the first heel-event
-    # Save the placement p of row at the found index as current-state (left/right) 
-    # Initialise a boolean for indicating if we are currently calc step and stride (1/0) = y/n
-
-    # Iterate through each row (starting from the found index)
-    # (if state=)
-    # If the row i+1 -> event=foot & placement=p and row i+2 -> event=toe & placement=p
-    #        A full step!
-    #        calculate support-time -> toe-time - heel-time
-    #        save cop for foot as step-length-start and stride-length-start
-    # next-state = left
-    #    
-    #         
-
-    """  
-    # Count the number of instances where 'event' column has value 'Tug_Event.right_heel'
-    # num_of_steps = (events['event'] == 'Tug_Event.right_heel').sum()
-    
-    # Find the index of the first row where 'event' column equals 'Tug_Event.right_heel'
-    #index = events.index[events['event'] == 'Tug_Event.right_heel'].min()
-
-    current_state = 'step-parameters'
-    next_state = 'step-parameters'
-
-    # Special handling for the test-files (time are of str-type, not epoch-type)
-    heel_time = events.loc[index, 'timestamp']
-    toe_time = events.loc[index, 'timestamp']
-
-    heel_time = str_to_epoch(heel_time)
-    toe_time = str_to_epoch(heel_time)
-
-    # Iterate through events starting from the index of 'Tug_Event.right_heel'
-    for i, row in events.iloc[index:].iterrows():
-        return
-
-    match current_state:
-
-            case 'calc-step-parameters':
-                if row['event'] == toe_event:
-                    toe_time = events.loc[i, 'timestamp']
-                    toe_time = str_to_epoch(toe_time)
-                    step_time = toe_time-heel_time
-                    
-                if row['event'] == heel_event:
-                    return"""
-
-
 def main():
     events = pd.read_csv('MALISA_Python/tug_event_data/tug_DS_1.csv')
     breakpoint()
     # Convert timestamp column to datetime
     #events['timestamp'] = str_to_epoch(events['timestamp'])   
     events['timestamp'] = events['timestamp'].apply(str_to_epoch)
-    breakpoint()
-    tug_time = calc_gait_parameters(events)
-
 
 main()
