@@ -108,13 +108,95 @@ def calc_walk_speed(events):
 
     return walk_speed
 
-def stride_length():
+def stride_length(events):
+    row = 0
+    stride_length = 0
+    nbrOfStrides = 0
+    distance = 0
+    stride_data = []
+    previous_left_foot = None
+    previous_right_foot = None
+    placement = None
 
-    return None
+    while row < len(events):
+        i = row
+        foot_data = []
+
+        # Save info about walk2 as an inticator for change
+        if (Tug_Event(events[row]['event']) == Tug_Event.walk2):
+            stride_data.append(events[row])
+
+        placement = events[row]['placement']
+        
+        # Find and save the foot with the highest pressure in the same subsequence
+        while (i < len(events) and Tug_Event(events[i]['event']) == Tug_Event.foot and events[i]['placement'] == placement ): #and Placement(events[i]['placement']) == placement 
+            foot_data.append(events[i])
+            i += 1
+
+        if (len(foot_data) > 0):
+            stride_data.append(save_highest_pressure(foot_data))
+            row += len(foot_data) # Skip the next foot events, they have been taken into account above.
+        else:
+            row += 1
+
+    # Iterate through the foot data
+    for data in stride_data:
+        print()
+        print(data)
+
+        if (data['event'] == 'Tug_Event.walk2'):
+            previous_left_foot = None
+            previous_right_foot = None
+
+        elif (data['placement'] == 'Placement.left'):
+            current_left_foot = float(data['COP_y'])
+            
+            # Calculate distance if there's a previous left foot
+            if previous_left_foot:
+                print("distance left foot:")
+                print(abs(current_left_foot - previous_left_foot))
+                distance += abs(current_left_foot - previous_left_foot)
+                nbrOfStrides += 1
+            # Update previous left foot
+            previous_left_foot = current_left_foot
+
+        elif (data['placement'] == 'Placement.right'):
+            current_right_foot = float(data['COP_y'])
+            
+            # Calculate distance if there's a previous left foot
+            if previous_right_foot:
+                print("distance right foot:")
+                print(abs(current_right_foot - previous_right_foot))
+                distance += abs(current_right_foot - previous_right_foot)
+                nbrOfStrides += 1
+                # ebreakpoint()
+            # Update previous left foot
+            previous_right_foot = current_right_foot
+    print("Strides:")
+    print(nbrOfStrides)
+    # Avoid divition by zero
+    if(nbrOfStrides != 0):
+        stride_length = distance / nbrOfStrides  
+
+    return stride_length  
+        
 
 ## ON HOLD (Inaccurate with heels and toes...)
 def support_time():
     return None
+
+def save_highest_pressure(event_data):
+    highest_pressure_data = None
+    max_pressure = float('-inf')  # Initialize with negative infinity
+
+    for data in event_data:
+        total_pressure = float(data['total_pressure'])
+
+        if total_pressure > max_pressure:
+            max_pressure = total_pressure
+            highest_pressure_data = data
+    
+    return highest_pressure_data
 
 def str_to_epoch(str_time):
     if len(str_time) < 26:
@@ -128,10 +210,14 @@ def str_to_epoch(str_time):
     return epoch_time
 
 def main():
-    events = pd.read_csv('MALISA_Python/tug_event_data/tug_DS_1.csv')
-    breakpoint()
+    # events = pd.read_csv('MALISA_Python/tug_event_data/tug_DS_test1.csv')
+    events = read_csv_data('MALISA_Python/tug_event_data/tug_DS_test4.csv')
+
+    stride = stride_length(events)
+    print(stride)
+    # breakpoint()
     # Convert timestamp column to datetime
-    #events['timestamp'] = str_to_epoch(events['timestamp'])   
-    events['timestamp'] = events['timestamp'].apply(str_to_epoch)
+    # events['timestamp'] = str_to_epoch(events['timestamp'])   
+    # events['timestamp'] = events['timestamp'].apply(str_to_epoch)
 
 main()
