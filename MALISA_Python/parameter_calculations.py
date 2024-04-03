@@ -52,7 +52,17 @@ def calc_tug_time(events):
     return tug_time
 
 def calc_stand_up_time(events):
-    return None
+    stand_start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
+    stand_end = events.loc[events['event'] == 'Tug_Event.walk1', 'timestamp'].iloc[0]
+
+    # Special handling for the test-files (time are of str-type, not epoch-type)
+    stand_start = str_to_epoch(stand_start)
+    stand_end = str_to_epoch(stand_end)
+    
+    # Calculate the time difference
+    stand_up_time = stand_end - stand_start
+    
+    return stand_up_time 
 
 def calc_turn_between_walks_time(events):
     start = events.loc[events['event'] == 'Tug_Event.turn1', 'timestamp'].iloc[0]
