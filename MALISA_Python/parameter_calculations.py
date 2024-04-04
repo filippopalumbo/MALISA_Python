@@ -118,7 +118,7 @@ def calc_walk_speed(events):
 
     return walk_speed
 
-def stride_length(events):
+def calc_stride_length(events):
     row = 0
     stride_length = 0
     nbrOfStrides = 0
@@ -223,7 +223,7 @@ def main():
     # events = pd.read_csv('MALISA_Python/tug_event_data/tug_DS_test1.csv')
     events = read_csv_data('MALISA_Python/tug_event_data/tug_DS_test4.csv')
 
-    stride = stride_length(events)
+    stride = calc_stride_length(events)
     print(stride)
     # breakpoint()
     # Convert timestamp column to datetime
