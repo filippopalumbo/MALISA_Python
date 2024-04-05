@@ -35,8 +35,7 @@ from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
 
-WALKWAY_LENGTH = 6.4
-TURN_AREA_Y_DIS = 0.2
+WALKWAY_LENGTH = 6 # Originally 6,4 m but 20 cm (on each side of the walkway) are allocated for turning
 
 # TUG parameters
 def calc_tug_time(events):
@@ -115,11 +114,9 @@ def calc_walk_speed(events):
 
     total_walk_time = walk1_time + walk2_time
 
-    walk_distance = WALKWAY_LENGTH - TURN_AREA_Y_DIS
+    total_walk_time_float = float(total_walk_time.total_seconds())
 
-    total_walk_distance = 2 * walk_distance
-
-    walk_speed = total_walk_distance / total_walk_time.total_seconds()
+    walk_speed = WALKWAY_LENGTH / total_walk_time_float
 
     return walk_speed
 
