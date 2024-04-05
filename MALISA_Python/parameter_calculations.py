@@ -36,6 +36,7 @@ from enumerations.tug_states import *
 from csv_handler import *
 
 WALKWAY_LENGTH = 6.4
+TURN_AREA_Y_DIS = 0.2
 
 # TUG parameters
 def calc_tug_time(events):
@@ -112,9 +113,13 @@ def calc_walk_speed(events):
     # Calculate the time difference
     walk2_time = walk2_end - walk2_start
 
-    walk_time = walk1_time + walk2_time
+    total_walk_time = walk1_time + walk2_time
 
-    walk_speed = walk_time / 2 * WALKWAY_LENGTH
+    walk_distance = WALKWAY_LENGTH - TURN_AREA_Y_DIS
+
+    total_walk_distance = 2 * walk_distance
+
+    walk_speed = total_walk_time / total_walk_distance
 
     return walk_speed
 
@@ -151,8 +156,6 @@ def calc_stride_length(events):
 
     # Iterate through the foot data
     for data in stride_data:
-        print()
-        print(data)
 
         if (data['event'] == 'Tug_Event.walk2'):
             previous_left_foot = None
@@ -163,8 +166,6 @@ def calc_stride_length(events):
             
             # Calculate distance if there's a previous left foot
             if previous_left_foot:
-                print("distance left foot:")
-                print(abs(current_left_foot - previous_left_foot))
                 distance += abs(current_left_foot - previous_left_foot)
                 nbrOfStrides += 1
             # Update previous left foot
@@ -175,15 +176,11 @@ def calc_stride_length(events):
             
             # Calculate distance if there's a previous left foot
             if previous_right_foot:
-                print("distance right foot:")
-                print(abs(current_right_foot - previous_right_foot))
                 distance += abs(current_right_foot - previous_right_foot)
                 nbrOfStrides += 1
                 # ebreakpoint()
             # Update previous left foot
             previous_right_foot = current_right_foot
-    print("Strides:")
-    print(nbrOfStrides)
     # Avoid divition by zero
     if(nbrOfStrides != 0):
         stride_length = distance / nbrOfStrides  
@@ -220,14 +217,20 @@ def str_to_epoch(str_time):
     return epoch_time
 
 def main():
-    # events = pd.read_csv('MALISA_Python/tug_event_data/tug_DS_test1.csv')
-    events = read_csv_data('MALISA_Python/tug_event_data/tug_DS_test4.csv')
+    events_df = pd.read_csv('MALISA_Python/data/tug_LC_test1.csv')
+    events_csv = read_csv_data('MALISA_Python/data/tug_LC_test1.csv')
 
-    stride = calc_stride_length(events)
-    print(stride)
-    # breakpoint()
-    # Convert timestamp column to datetime
-    # events['timestamp'] = str_to_epoch(events['timestamp'])   
-    # events['timestamp'] = events['timestamp'].apply(str_to_epoch)
+    tug_time = calc_tug_time(events_df)
+    stand_up_time = calc_stand_up_time(events_df)
+    turn_between_walks_time = calc_turn_between_walks_time(events_df)
+    turn_before_sit_time = calc_turn_before_sit_time(events_df)
+    walk_speed = calc_walk_speed(events_df)
+    stride_length = calc_stride_length(events_csv)
+    print('tug time: ' + str(tug_time))
+    print('stand up time: ' + str(stand_up_time))
+    print('turn between walks time: ' + str(turn_between_walks_time))
+    print('turn before sit time: ' + str(turn_before_sit_time))
+    print('walk speed: ' + str(walk_speed))
+    print('stride length: ' + str(stride_length))
 
 main()
