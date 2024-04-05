@@ -119,7 +119,7 @@ def calc_walk_speed(events):
 
     total_walk_distance = 2 * walk_distance
 
-    walk_speed = total_walk_time / total_walk_distance
+    walk_speed = total_walk_distance / total_walk_time.total_seconds()
 
     return walk_speed
 
@@ -217,8 +217,8 @@ def str_to_epoch(str_time):
     return epoch_time
 
 def main():
-    events_df = pd.read_csv('MALISA_Python/data/tug_LC_test1.csv')
-    events_csv = read_csv_data('MALISA_Python/data/tug_LC_test1.csv')
+    events_df = pd.read_csv('MALISA_Python/data/analysis/tug_RC_test4.csv')
+    events_csv = read_csv_data('MALISA_Python/data/analysis/tug_RC_test4.csv')
 
     tug_time = calc_tug_time(events_df)
     stand_up_time = calc_stand_up_time(events_df)
