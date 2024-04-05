@@ -80,9 +80,14 @@ def load_file(file_path):
     data_array = df.set_index('timestamp').to_numpy().reshape(len(df), 80, 28)
 
     return data_array
+def load_data(filepath):
+    data = pd.read_csv(filepath)
+    data = data.iloc[:, 1:].to_numpy().reshape(len(data), 80, 28)
+    return data
 
 def main():
-    data = load_file('MALISA_Python/data/DS_TUG_Floor1.csv')
+    #data = load_file('MALISA_Python/data/DL_FULL_TUG_RES_SYNCH_Floor1.csv')
+    data = load_data('MALISA_Python/data/RC_RES_SYN_Floor1.csv')
 
     # clear data of values below treshold
     data[data < 400] = 0
