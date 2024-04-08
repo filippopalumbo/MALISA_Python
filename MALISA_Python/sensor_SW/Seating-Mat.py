@@ -150,6 +150,60 @@ def skipAdv(ser):
             print(f"Read byte {xbyte.hex()} - {xbyte.decode('utf-8')}")
 
 
+def seating_mat_data_collector(pathname, port):
+      # Connects to serial port
+    # '/dev/ttyUSB0'
+    ser = serial.Serial(
+        port,
+        baudrate=115200,
+        timeout=0.1
+    )
+
+    # Skip BLE advertising string
+    time.sleep(5)
+    skipAdv(ser)
+
+    # Open file
+    with open(pathname, 'w') as f:
+    
+        writer = csv.writer(f)
+    
+        # Write CSV header
+        csvHeader = ['Timestamp']
+        for row in range(ROWS):
+            for column in range(COLS):
+                csvHeader.append("({row}-{column})".format(row=row, column=column))
+        writer.writerow(csvHeader)
+        
+        # Run until interrupted
+        while True:
+        
+            # Send start sequence to retrieve full matrix
+            fullMatrixStartSequence(ser)
+
+            # Get matrix
+            map = getMap(ser)
+            
+            # Get current timestamp
+            currentTimestamp = time.time()
+            if debug:
+                print(f"Got map at {currentTimestamp}")
+            # if debug:
+            #     printMap(map)
+
+       
+            # Prepare new CSV line
+            csvLine = []
+            csvLine.append(currentTimestamp)
+            for row in range(ROWS):
+                csvLine.extend(map[row,:])
+            # if debug:
+            #     print(csvLine)
+
+            # Write CSV line to file            
+            writer.writerow(csvLine)
+
+
 def main():
 
     # Check syntax
@@ -171,7 +225,7 @@ def main():
     # Connects to serial port
     # '/dev/ttyUSB0'
     ser = serial.Serial(
-        port,
+        port,  
         baudrate=115200,
         timeout=0.1
     )

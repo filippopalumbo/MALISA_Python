@@ -105,7 +105,53 @@ def printMap(map):
             tmp = tmp + str(map[i][j]) + " ,"
         print(tmp)
     print("\n")
-   
+
+def fitness_mat_data_collector(pathname, port):
+    # Connects to serial port
+    # '/dev/ttyUSB0'
+    ser = serial.Serial(
+        port,
+        baudrate=115200,
+        timeout=0.1
+    )
+
+    # Open file
+    with open(pathname, 'w') as f:
+    
+        writer = csv.writer(f)
+    
+        # Write CSV header
+        csvHeader = ['Timestamp']
+        for row in range(ROWS):
+            for column in range(COLS):
+                csvHeader.append("({row}-{column})".format(row=row, column=column))
+        writer.writerow(csvHeader)
+    
+        # Run until interrupted
+        while True:
+        
+            # Get map
+            map = getMap(ser)
+                 
+            # Get current timestamp
+            currentTimestamp = time.time()
+            if debug:
+                print(f"Got map at {currentTimestamp}")
+            # if debug:
+            #     printMap(map)
+
+            # Prepare new CSV line
+            csvLine = []
+            csvLine.append(currentTimestamp)
+            for row in range(ROWS):
+                csvLine.extend(map[row,:])
+            # if debug:
+            #     print(csvLine)
+
+            # Write CSV line to file            
+            writer.writerow(csvLine)
+            
+
 
 def main():
 
