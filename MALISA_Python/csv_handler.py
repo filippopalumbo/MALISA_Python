@@ -45,7 +45,7 @@ def create_filepath(initials, test):
         if " " in test:
             test = test.replace(" ", "")
 
-    filepath = f"MALISA_Python/tug_event_data/tug_{initials}_{test}.csv"
+    filepath = f"MALISA_Python/analyzed_data/{initials}_{test}_analysis.csv"
 
     return filepath
 

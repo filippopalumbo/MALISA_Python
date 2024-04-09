@@ -213,7 +213,20 @@ def str_to_epoch(str_time):
     epoch_time = datetime.datetime.strptime(str_time, timestamp_format)
     return epoch_time
 
-def main():
+def calculate_parameters(filepath):
+    events_df = pd.read_csv(filepath)
+    events_csv = read_csv_data(filepath)
+    parameters = {}
+    parameters['tug_time'] = calc_tug_time(events_df)
+    parameters['stand_up_time'] = calc_stand_up_time(events_df)
+    parameters['turn_between_walks_time'] = calc_turn_between_walks_time(events_df)
+    parameters['turn_before_sit_time'] = calc_turn_before_sit_time(events_df)
+    parameters['walk_speed'] = calc_walk_speed(events_df)
+    parameters['stride_length'] = calc_stride_length(events_csv)
+
+    return parameters
+
+"""def main():
     events_df = pd.read_csv('MALISA_Python/data/analysis/tug_RC_test4.csv')
     events_csv = read_csv_data('MALISA_Python/data/analysis/tug_RC_test4.csv')
 
@@ -230,4 +243,4 @@ def main():
     print('walk speed: ' + str(walk_speed))
     print('stride length: ' + str(stride_length))
 
-main()
+main()"""
