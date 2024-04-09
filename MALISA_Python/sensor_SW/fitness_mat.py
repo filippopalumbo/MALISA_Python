@@ -5,15 +5,11 @@ import datetime
 import csv
 import sys
 
-
-
 ROWS = 80  # Rows of the sensor
 COLS = 28  # Columns of the sensor
 
-debug = True
+debug = False
 
-
-    
 
 def activePointsRequestMap(ser):
     if debug:
@@ -57,6 +53,7 @@ def activePointsReceiveMap(ser):
         n += 1
     return matrix
  
+
 def activePointsRetrieveMap(ser):
     xbyte = ''
     print(f"Bytes waiting to be read: {ser.in_waiting}")
@@ -98,6 +95,7 @@ def getMap(ser):
         print(f"Map retrieved")
     return map
 
+
 def printMap(map):
     for i in range(ROWS):
         tmp = ""
@@ -106,116 +104,69 @@ def printMap(map):
         print(tmp)
     print("\n")
 
-def fitness_mat_data_collector(pathname, port):
-    # Connects to serial port
-    # '/dev/ttyUSB0'
-    ser = serial.Serial(
-        port,
-        baudrate=115200,
-        timeout=0.1
-    )
 
-    # Open file
-    with open(pathname, 'w') as f:
+# def main():
+
+#     # Check syntax
+#     arg_count = len(sys.argv)
+#     if arg_count != 3:
+#         print(f"Syntax: python3 {sys.argv[0]} <port> <filename>")
+#         sys.exit(-1)
     
-        writer = csv.writer(f)
-    
-        # Write CSV header
-        csvHeader = ['Timestamp']
-        for row in range(ROWS):
-            for column in range(COLS):
-                csvHeader.append("({row}-{column})".format(row=row, column=column))
-        writer.writerow(csvHeader)
-    
-        # Run until interrupted
-        while True:
+#     # Get port
+#     port = sys.argv[1]
+#     if debug:
+#         print(f"Port {port}")
         
-            # Get map
-            map = getMap(ser)
+#     # get pathname
+#     pathname = sys.argv[2]
+#     if debug:
+#         print(f"Pathname {pathname}")
+    
+#     # Connects to serial port
+#     # '/dev/ttyUSB0'
+#     ser = serial.Serial(
+#         port,
+#         baudrate=115200,
+#         timeout=0.1
+#     )
+
+#     # Open file
+#     with open(pathname, 'w') as f:
+    
+#         writer = csv.writer(f)
+    
+#         # Write CSV header
+#         csvHeader = ['Timestamp']
+#         for row in range(ROWS):
+#             for column in range(COLS):
+#                 csvHeader.append("({row}-{column})".format(row=row, column=column))
+#         writer.writerow(csvHeader)
+    
+#         # Run until interrupted
+#         while True:
+        
+#             # Get map
+#             map = getMap(ser)
                  
-            # Get current timestamp
-            currentTimestamp = time.time()
-            if debug:
-                print(f"Got map at {currentTimestamp}")
-            # if debug:
-            #     printMap(map)
+#             # Get current timestamp
+#             current_timestamp = time.time()
+#             if debug:
+#                 print(f"Got map at {current_timestamp}")
+#             # if debug:
+#             #     printMap(map)
 
-            # Prepare new CSV line
-            csvLine = []
-            csvLine.append(currentTimestamp)
-            for row in range(ROWS):
-                csvLine.extend(map[row,:])
-            # if debug:
-            #     print(csvLine)
+#             # Prepare new CSV line
+#             csvLine = []
+#             csvLine.append(current_timestamp)
+#             for row in range(ROWS):
+#                 csvLine.extend(map[row,:])
+#             # if debug:
+#             #     print(csvLine)
 
-            # Write CSV line to file            
-            writer.writerow(csvLine)
+#             # Write CSV line to file            
+#             writer.writerow(csvLine)
             
-
-
-def main():
-
-    # Check syntax
-    arg_count = len(sys.argv)
-    if arg_count != 3:
-        print(f"Syntax: python3 {sys.argv[0]} <port> <filename>")
-        sys.exit(-1)
-    
-    # Get port
-    port = sys.argv[1]
-    if debug:
-        print(f"Port {port}")
+            
         
-    # get pathname
-    pathname = sys.argv[2]
-    if debug:
-        print(f"Pathname {pathname}")
-    
-    # Connects to serial port
-    # '/dev/ttyUSB0'
-    ser = serial.Serial(
-        port,
-        baudrate=115200,
-        timeout=0.1
-    )
-
-    # Open file
-    with open(pathname, 'w') as f:
-    
-        writer = csv.writer(f)
-    
-        # Write CSV header
-        csvHeader = ['Timestamp']
-        for row in range(ROWS):
-            for column in range(COLS):
-                csvHeader.append("({row}-{column})".format(row=row, column=column))
-        writer.writerow(csvHeader)
-    
-        # Run until interrupted
-        while True:
-        
-            # Get map
-            map = getMap(ser)
-                 
-            # Get current timestamp
-            currentTimestamp = time.time()
-            if debug:
-                print(f"Got map at {currentTimestamp}")
-            # if debug:
-            #     printMap(map)
-
-            # Prepare new CSV line
-            csvLine = []
-            csvLine.append(currentTimestamp)
-            for row in range(ROWS):
-                csvLine.extend(map[row,:])
-            # if debug:
-            #     print(csvLine)
-
-            # Write CSV line to file            
-            writer.writerow(csvLine)
-            
-            
-            
-
-main()
+# main()
