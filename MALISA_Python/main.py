@@ -1,78 +1,75 @@
 from state_machine import *
 from csv_handler import *
 from parameter_calculations import *
+from preprocessing import *
 import streamlit as st
 
-def click_run_button():
-    # Only happens once - when the button is clicked
-    st.session_state.run_clicked = True
-    st.session_state.file_floor_1_disabled = True
-    st.session_state.file_floor_2_disabled = True
-    st.session_state.file_seat_disabled = True
-    st.session_state.run_disabled = False
-
-def enable_run():
-    st.session_state.run_disabled = False
-
-def disable_run():
-    st.session_state.run_disabled = True
-
-def file_selector_raw_sensor_data(folder_path='./MALISA_Python/sensor_data'):
+def file_selector_sensor_data_floor_1(folder_path='./MALISA_Python/sensor_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('Select the generated analysis file', filenames)
+    selected_filename = st.selectbox('Select file with sensor data of Fitness Mat 1', filenames)
     return os.path.join(folder_path, selected_filename)
 
-def file_selector_tug_analysis(folder_path='./MALISA_Python/tug_analysis_files'):
+def file_selector_sensor_data_floor_2(folder_path='./MALISA_Python/sensor_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('Select the generated analysis file', filenames)
+    selected_filename = st.selectbox('Select file with sensor data of Fitness Mat 2', filenames)
     return os.path.join(folder_path, selected_filename)
 
-def calculate_parameters(filepath):
-    events_df = pd.read_csv(filepath)
-    events_csv = read_csv_data(filepath)
-    parameters = {}
-    parameters['tug_time'] = calc_tug_time(events_df)
-    parameters['stand_up_time'] = calc_stand_up_time(events_df)
-    parameters['turn_between_walks_time'] = calc_turn_between_walks_time(events_df)
-    parameters['turn_before_sit_time'] = calc_turn_before_sit_time(events_df)
-    parameters['walk_speed'] = calc_walk_speed(events_df)
-    parameters['stride_length'] = calc_stride_length(events_csv)
+def file_selector_sensor_data_seat(folder_path='./MALISA_Python/sensor_data'):
+    filenames = os.listdir(folder_path)
+    selected_filename = st.selectbox('Select file with sensor data of Seat Mat', filenames)
+    return os.path.join(folder_path, selected_filename)
 
-    return parameters
+def file_selector_tug_analysis(folder_path='./MALISA_Python/analyzed_data'):
+    filenames = os.listdir(folder_path)
+    selected_filename = st.selectbox('Select analyzed file', filenames)
+    return os.path.join(folder_path, selected_filename)
 
 def create_table(parameters):
-    info = [('TUG time', 's', parameters['tug_time']),
-            ('Stand up time', 's', parameters['stand_up_time']),
-            ('Turn between walks time', 's', parameters['turn_between_walks_time']),
-            ('Turn before sit time', 's', parameters['turn_before_sit_time']),
-            ('Walk speed', 'm/s', parameters['walk_speed'])
-            ('Stride Length', 'm', parameters['stride_length'])]
+    tug_time_seconds = parameters['tug_time'].seconds + parameters['tug_time'].microseconds/1000000
+    stand_up_time_seconds = parameters['stand_up_time'].seconds + parameters['stand_up_time'].microseconds/1000000
+    turn_between_walks_time_seconds = parameters['turn_between_walks_time'].seconds + parameters['turn_between_walks_time'].microseconds/1000000
+    turn_before_sit_time_seconds = parameters['turn_before_sit_time'].seconds + parameters['turn_before_sit_time'].microseconds/1000000
+
+    info = [('TUG time', 's', tug_time_seconds),
+            ('Stand up time', 's', stand_up_time_seconds),
+            ('Turn between walks time', 's', turn_between_walks_time_seconds),
+            ('Turn before sit time', 's', turn_before_sit_time_seconds),
+            ('Walk speed', 'm/s', parameters['walk_speed']),
+            ('Stride Length', 'cm', parameters['stride_length'])]
 
     info = pd.DataFrame(info, columns=['Parameter', 'Unit' ,'Value'])
     st.table(info)
 
 def main():
-
+    st.title('TUG Analysis Web Application')
     # Sidebar menu
     with st.sidebar:
-        st.subheader('Main Menu')
-        mode = st.selectbox(label='Select Mode', options=['Run Analysis', 'View Results'])
+        st.subheader('Choose Mode')
+        mode = st.selectbox(label='', options=['Run Analysis', 'View Results'])
     
     # Main area
     if mode == 'Run Analysis':
-        st.subheader('Lets analyse!')
-        file_floor_1 = st.file_uploader("Upload floor 1 csv-file", accept_multiple_files=False)
-        file_floor_2 = st.file_uploader("Upload floor 2 csv-file", accept_multiple_files=False)
-        file_seat = st.file_uploader("Upload seat csv-file", accept_multiple_files=False)
+        st.subheader('Run analysis on raw sensor data')
+        file_floor_1 = file_selector_sensor_data_floor_1()
+        file_floor_2 = file_selector_sensor_data_floor_2()
+        file_seat = file_selector_sensor_data_seat()
+
         initials = st.text_input('Initials of subject', '')
         test_id = st.text_input('Id of test', '')
 
         if st.button('RUN'):
+            # Save files with identical names in the processed data folder
+            #process(file_floor_1, file_floor_2, file_seat)
             tug_analysis_filepath = create_filepath(initials, test_id)
             create_csv_file(tug_analysis_filepath)
+
+            # When testing on raw data, update the filepath to the processed file
+            #run_analysis(f'MALISA_Python/processed_data/{file_floor_1.name}', f'MALISA_Python/processed_data/{file_floor_2.name}', f'MALISA_Python/processed_data/{file_seat.name}', tug_analysis_filepath)
+
+            # When testing on already processed data, no need to update the filepath
             run_analysis(file_floor_1, file_floor_2, file_seat, tug_analysis_filepath)
     else:
-        st.subheader('Lets view results')
+        st.subheader('View the results of a stored TUG-test')
         filename = file_selector_tug_analysis()
         if st.button('VIEW'):
             parameters = calculate_parameters(filename)

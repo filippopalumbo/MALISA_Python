@@ -3,9 +3,6 @@ from sensor_calculations import *
 from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
-import streamlit as st
-import plotly.graph_objects as go  
-from plotly.subplots import make_subplots
 
 # Thresholds
 THRESHOLD_SEAT = 3600
@@ -70,7 +67,6 @@ def on_stand(metrics, filepath_TED):
 
 def on_walk_1(metrics, filepath_TED):
     y_last_coord = metrics['y_last_coord']
-    y_first_coord = metrics['y_first_coord']
     x_max_pressure = metrics['x_coord_max_pressure']
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
@@ -112,9 +108,7 @@ def on_walk_1(metrics, filepath_TED):
 
 def on_walk_2(metrics, filepath_TED):
     y_first_coord = metrics['y_first_coord']
-    y_last_coord = metrics['y_last_coord']
     x_max_pressure = metrics['x_coord_max_pressure']
-    y_max_pressure = metrics['y_coord_max_pressure']
     max_pressure = metrics['max_pressure']
     left_side_total_pressure = metrics['left_side_total_pressure']
     right_side_total_pressure = metrics['right_side_total_pressure'] 
@@ -238,24 +232,24 @@ def get_next_state(current_state, metrics, filepath_TED):
         case Tug_State.sit:
             return on_sit(metrics, filepath_TED)
 
-def get_file_paths(test):
+"""def get_file_paths(test):
 
     if test == 'test 1':
-        file_path_mat1 = 'MALISA_Python/data/tug1_mat1.csv'
-        file_path_mat2 = 'MALISA_Python/data/tug1_mat2.csv'
-        file_path_seat = 'MALISA_Python/data/tug1_seat.csv'
+        file_path_mat1 = 'MALISA_Python/data/RC_tug1_floor1.csv'
+        file_path_mat2 = 'MALISA_Python/data/RC_tug1_floor2.csv'
+        file_path_seat = 'MALISA_Python/data/RC_tug1_seat.csv'
     if test == 'test 2':
-        file_path_mat1 = 'MALISA_Python/data/tug2_mat1.csv'
-        file_path_mat2 = 'MALISA_Python/data/tug2_mat2.csv'
-        file_path_seat = 'MALISA_Python/data/tug2_seat.csv'
+        file_path_mat1 = 'MALISA_Python/data/RC_tug2_floor1.csv'
+        file_path_mat2 = 'MALISA_Python/data/RC_tug2_floor2.csv'
+        file_path_seat = 'MALISA_Python/data/RC_tug2_seat.csv'
     if test == 'test 3':
-        file_path_mat1 = 'MALISA_Python/data/tug3_mat1.csv'
-        file_path_mat2 = 'MALISA_Python/data/tug3_mat2.csv'
-        file_path_seat = 'MALISA_Python/data/tug3_seat.csv'
+        file_path_mat1 = 'MALISA_Python/data/RC_tug3_floor1.csv'
+        file_path_mat2 = 'MALISA_Python/data/RC_tug3_floor2.csv'
+        file_path_seat = 'MALISA_Python/data/RC_tug3_seat.csv'
     if test == 'test 4':
-        file_path_mat1 = 'MALISA_Python/data/tug4_mat1.csv'
-        file_path_mat2 = 'MALISA_Python/data/tug4_mat2.csv'
-        file_path_seat = 'MALISA_Python/data/tug4_seat.csv'  
+        file_path_mat1 = 'MALISA_Python/data/RC_tug4_floor1.csv'
+        file_path_mat2 = 'MALISA_Python/data/RC_tug4_floor2.csv'
+        file_path_seat = 'MALISA_Python/data/RC_tug4_seat.csv'  
 
     return file_path_mat1, file_path_mat2, file_path_seat 
 
@@ -306,7 +300,7 @@ def main():
     timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
     # Create CSV file for test to save tug event data (TED) 
-    filepath_TED = create_filepath('DS', test)
+    filepath_TED = create_filepath('RC', test)
     create_csv_file(filepath_TED)
 
     mode = st.selectbox(label='Select Mode', options=['Run Analysis', 'Visual Analysis'])
@@ -332,4 +326,4 @@ def main():
             #create_heatmaps_and_plot(floor_frame, seat_frame)
             plot_floor(floor_frame)
 
-main()
+main()"""
