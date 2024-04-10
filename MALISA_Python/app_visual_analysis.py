@@ -1,3 +1,27 @@
+"""
+Summary:
+This Python script is designed as part of a Streamlit application for analyzing sensor data 
+collected during the Timed Up and Go (TUG) test. It loads sensor data from floor mats and a 
+seating mat, calculates various metrics related to pressure distribution and center of 
+pressure, and visualizes the data using heatmaps and tables.
+
+Purpose:
+The purpose of this script is to provide a user-friendly interface for analyzing sensor 
+data gathered during TUG tests. By loading sensor data from CSV files, calculating metrics, 
+and visualizing the results, the script enables users to gain insights into the participants' 
+movement patterns and pressure distribution during the test.
+
+Usage:
+1. Select a TUG test from the dropdown menu.
+2. The script will load sensor data from corresponding CSV files for floor mats and the seating mat.
+3. Use the slider to choose a specific frame or timestamp from the loaded data.
+4. Metrics related to pressure distribution and center of pressure will be calculated and displayed in a table.
+5. Heatmaps showing pressure distribution on floor mats and the seating mat will be generated and visualized.
+6. Users can analyze the pressure distribution and movement patterns based on the visualizations and metrics provided.
+
+Author: [Malin Ramkull & Hedda Eriksson]
+Date: [10 april 2024]
+"""
 import pandas as pd
 from sensor_calculations import *
 from enumerations.tug_events import *
