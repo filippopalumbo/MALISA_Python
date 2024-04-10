@@ -1,7 +1,8 @@
 
+import pandas as pd
 import duckdb
 
-# Read csv file and translate epoch to human time, rename column to 'timestamp'
+# read csv files and translate epoch to human time, rename column to timestamp
 def read_file(filename):
     data = duckdb.sql(f"""
 SELECT
@@ -14,6 +15,9 @@ FROM read_csv('{filename}')
 def resample_files(dfs):
     resampled_dfs = []
     for df in dfs:
+        # Convert epoch timestamps to human-readable timestamps
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+
         # Set timestamp as index
         df.set_index('timestamp', inplace=True)
         # Resample at a frequency of 10Hz and set NaN to last recorded value value (forward fill)
@@ -46,10 +50,14 @@ def synchronize_end_time(df1, df2):
         df2 = df2.iloc[:len(df1)]  # Truncate df2 to match the length of df1
     return df1, df2
 
-def process(filepath_floor_1, filepath_floor_2, filepath_seat):
-    df_floor_1 = read_file(filepath_floor_1)
-    df_floor_2 = read_file(filepath_floor_2)
-    df_seat = read_file(filepath_seat)
+def process(filepath_floor_1, filepath_floor_2, filepath_seat, initials, test_id):
+    #df_floor_1 = read_file(filepath_floor_1)
+    #df_floor_2 = read_file(filepath_floor_2)
+    #df_seat = read_file(filepath_seat)
+
+    df_floor_1 = pd.read_csv(filepath_floor_1)
+    df_floor_2 = pd.read_csv(filepath_floor_2)
+    df_seat = pd.read_csv(filepath_seat)
 
     # Resample files at 10Hz
     df_floor_1, df_floor_2, df_seat = resample_files([df_floor_1, df_floor_2, df_seat])
@@ -61,9 +69,9 @@ def process(filepath_floor_1, filepath_floor_2, filepath_seat):
     # Synchronize the ending timestamps on the two floor mats
     df_floor_1, df_floor_2 = synchronize_end_time(df_floor_1, df_floor_2)
 
-    df_floor_1.to_csv(f'MALISA_Python/processed_data/{filepath_floor_1.name}', index=False)
-    df_floor_2.to_csv(f'MALISA_Python/processed_data/{filepath_floor_2.name}', index=False)
-    df_seat.to_csv(f'MALISA_Python/processed_data/{filepath_seat.name}', index=False)
+    df_floor_1.to_csv(f'MALISA_Python/processed_data/{initials}_{test_id}_floor1.csv')
+    df_floor_2.to_csv(f'MALISA_Python/processed_data/{initials}_{test_id}_floor2.csv')
+    df_seat.to_csv(f'MALISA_Python/processed_data/{initials}_{test_id}_seat.csv')
 
 
 

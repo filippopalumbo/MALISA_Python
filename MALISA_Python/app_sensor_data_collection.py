@@ -35,9 +35,9 @@ import csv_handler
 import sensor_SW.seating_mat as seating_mat
 import sensor_SW.fitness_mat as fitness_mat
 
-PORT_SEAT = ''    # '/dev/tty.usbserial-1120'
-PORT_FLOOR1 = ''   #'/dev/tty.usbmodem84214601' 
-PORT_FLOOR2 =  ''
+PORT_SEAT = ''    # '/dev/tty.usbserial-1120' /dev/tty.usbserial-1130
+PORT_FLOOR1 = ''   #'/dev/tty.usbmodem84214601' /dev/tty.usbmodem77024501
+PORT_FLOOR2 =  ''                           # /dev/tty.usbmodem84214601
 ROWS_SEAT = 20  
 COLS_SEAT = 20  
 ROWS_FLOOR = 80  
@@ -129,7 +129,7 @@ def data_collector_seat(port, event):
             # Send start sequence to retrieve full matrix
             seating_mat.fullMatrixStartSequence(ser)
             # Get matrix
-            map = seating_mat.getMap(ser)
+            map = seating_mat.getMap(ser) 
              
             # Get current timestamp
             current_timestamp = time.time()
@@ -182,16 +182,16 @@ def init():
 
 @st.cache_resource(
 )
-def initialize_threads(_event, port1, port2):
+def initialize_threads(_event, port1, port2, port3):
     # Start each function in a separate thread
     thread1 = threading.Thread(target=data_collector_seat, args=(port1, _event,))
     thread2 = threading.Thread(target=data_collector_floor1, args=(port2, _event,))
-    # thread3 = threading.Thread(target=data_collector_floor2, args=(port1, event,)
+    thread3 = threading.Thread(target=data_collector_floor2, args=(port3, _event,))
 
     # Start all threads
     thread1.start()
     thread2.start()
-    # thread3.start()
+    thread3.start()
 
 
 def main():
@@ -240,18 +240,19 @@ def main():
     if st.session_state.init:
         text1_input_container = st.empty()
         text2_input_container = st.empty()
-        # text3_input_container = st.empty()
+        text3_input_container = st.empty()
 
         PORT_SEAT = text1_input_container.text_input('Enter port for seating mat:')
         PORT_FLOOR1 = text2_input_container.text_input('Enter port for fitness mat 1:')
-        # PORT_FLOOR2 = text_3_input_container.text_input('Enter port for fitness mat 2:')
+        PORT_FLOOR2 = text3_input_container.text_input('Enter port for fitness mat 2:')
  
         if st.session_state.submit_button_flag: # NEW
-            initialize_threads(event, PORT_SEAT, PORT_FLOOR1) 
-            # initialize_threads(event, PORT_SEAT, PORT_FLOOR1, PORT_FLOOR2) 
+            # initialize_threads(event, PORT_SEAT, PORT_FLOOR1) 
+            initialize_threads(event, PORT_SEAT, PORT_FLOOR1, PORT_FLOOR2) 
             
             text1_input_container.empty()
             text2_input_container.empty()
+            text3_input_container.empty()
 
             st.session_state.init = False
             st.session_state.start_disabled = False
@@ -260,11 +261,11 @@ def main():
     if st.session_state.start_clicked:
         csv_handler.delete(FILEPATH_SEAT)
         csv_handler.delete(FILEPATH_FLOOR1)
-        # csv_handler.delete(FILEPATH_FLOOR2)
+        csv_handler.delete(FILEPATH_FLOOR2)
 
         csv_handler.create_csv_sensor_data(FILEPATH_SEAT, ROWS_SEAT, COLS_SEAT)
         csv_handler.create_csv_sensor_data(FILEPATH_FLOOR1, ROWS_FLOOR, COLS_FLOOR)
-        # csv_handler.create_csv_sensor_data(FILEPATH_FLOOR2, ROWS_FLOOR, COLS_FLOOR)
+        csv_handler.create_csv_sensor_data(FILEPATH_FLOOR2, ROWS_FLOOR, COLS_FLOOR)
 
         event.set()
 
@@ -280,11 +281,11 @@ def main():
         if st.session_state.submit_button_flag:
             filepath_seat = f"MALISA_Python/sensor_data/{initials}_{test}_seat.csv"
             filepath_floor1 = f"MALISA_Python/sensor_data/{initials}_{test}_floor1.csv"
-            # filepath_floor2 = f"MALISA_Python/sensor_data/{initials}_{test}_floor2.csv"
+            filepath_floor2 = f"MALISA_Python/sensor_data/{initials}_{test}_floor2.csv"
 
             csv_handler.change_name(FILEPATH_SEAT, filepath_seat)
             csv_handler.change_name(FILEPATH_FLOOR1, filepath_floor1)
-            # csv_handler.change_name(FILEPATH_FLOOR2, filepath_floor2)
+            csv_handler.change_name(FILEPATH_FLOOR2, filepath_floor2)
 
             st.session_state.stop_clicked = False
             st.session_state.submit_button_flag = False #NEW
