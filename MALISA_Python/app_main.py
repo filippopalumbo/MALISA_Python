@@ -59,15 +59,15 @@ def main():
 
         if st.button('RUN'):
             # Save files with identical names in the processed data folder
-            #process(file_floor_1, file_floor_2, file_seat)
+            process(file_floor_1, file_floor_2, file_seat, initials, test_id)
             tug_analysis_filepath = create_filepath(initials, test_id)
             create_csv_file(tug_analysis_filepath)
 
             # When testing on raw data, update the filepath to the processed file
-            #run_analysis(f'MALISA_Python/processed_data/{file_floor_1.name}', f'MALISA_Python/processed_data/{file_floor_2.name}', f'MALISA_Python/processed_data/{file_seat.name}', tug_analysis_filepath)
+            run_analysis(f'MALISA_Python/processed_data/{initials}_{test_id}_floor1.csv', f'MALISA_Python/processed_data/{initials}_{test_id}_floor2.csv', f'MALISA_Python/processed_data/{initials}_{test_id}_seat.csv', tug_analysis_filepath)
 
             # When testing on already processed data, no need to update the filepath
-            run_analysis(file_floor_1, file_floor_2, file_seat, tug_analysis_filepath)
+            #run_analysis(file_floor_1, file_floor_2, file_seat, tug_analysis_filepath)
     else:
         st.subheader('View the results of a stored TUG-test')
         filename = file_selector_tug_analysis()
