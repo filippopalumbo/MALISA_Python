@@ -102,8 +102,8 @@ def main():
         file_floor_2 = file_selector_sensor_data_floor_2()
         file_seat = file_selector_sensor_data_seat()
 
-        initials = st.text_input('INITIALS', '')
-        test_id = st.text_input('TEST ID', '')
+        initials = st.text_input('Initials', '')
+        test_id = st.text_input('Id', '')
 
         if st.button('RUN'):
             # Save files with identical names in the processed data folder
@@ -120,10 +120,10 @@ def main():
         st.markdown('2. Enter the initials of the patient and the id of the test.')
         st.markdown('3. Choose wether to view results and/or see the recording.')
         filename = file_selector_tug_analysis()
-        initials = st.text_input('Initials of subject', '')
-        test_id = st.text_input('Id of test', '')
+        initials = st.text_input('Initials', '')
+        test_id = st.text_input('Id', '')
         results = st.checkbox('Results')
-        visuals = st.checkbox('Visuals')
+        visuals = st.checkbox('Visual Playback')
 
         if results:
             parameters = calculate_parameters(filename)
