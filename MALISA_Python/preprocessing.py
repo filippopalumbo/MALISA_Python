@@ -43,12 +43,30 @@ def syncronize_start_time(dfs, start_time):
         syncronized_dfs.append(df)
     return syncronized_dfs
 
-def synchronize_end_time(df1, df2):
+# Find which file has the latest starttime
+def find_earlist_end_time(dfs):
+    earliest_end_time = dfs[0].index.min()
+    for df in dfs:
+        df_min_date = df.index.min()
+        if df_min_date > latest_start_time:
+            latest_start_time = df_min_date
+    return latest_start_time
+
+# Synchronize files according to the latest starttime
+def syncronize_end_time(dfs, end_time):
+    syncronized_dfs = []
+    for df in dfs:
+        mask = df.index >= end_time
+        df = df[mask]
+        syncronized_dfs.append(df)
+    return syncronized_dfs
+
+"""def synchronize_end_time(df1, df2):
     if len(df1) > len(df2):
         df1 = df1.iloc[:len(df2)]  # Truncate df1 to match the length of df2
     elif len(df2) > len(df1):
         df2 = df2.iloc[:len(df1)]  # Truncate df2 to match the length of df1
-    return df1, df2
+    return df1, df2"""
 
 def process(filepath_floor_1, filepath_floor_2, filepath_seat, initials, test_id):
     #df_floor_1 = read_file(filepath_floor_1)
