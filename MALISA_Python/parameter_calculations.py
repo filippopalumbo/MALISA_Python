@@ -35,8 +35,9 @@ from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
 
-WALKWAY_LENGTH = 4.8 # Originally 6,4 m but 20 cm (on each side of the walkway) are allocated for turning
-SENSOR_RESOLUTION = 2 # Distance between sensors is 2 cm
+WALKWAY_LENGTH = 5.6    # Originally 6,4 m (1,5 m/mat) but 20 cm (on each side of the walkway) are allocated for turning. 
+                        # This gives us: 1.6 m * 4 mats - 0,2 m * 4 mats  (back and forward)
+SENSOR_RESOLUTION = 2   # Sensor element resolution is 20 mm (calculating lenght in cm) 
 
 # TUG parameters
 def calc_tug_time(events):
@@ -74,7 +75,7 @@ def calc_turn_between_walks_time(events):
     end = str_to_epoch(end)
     
     # Calculate the time difference
-    turn_time = end - start
+    turn_time = end - start 
     
     return turn_time    
 
@@ -171,18 +172,18 @@ def calc_stride_length(events):
             previous_left_foot = current_left_foot
 
         elif (data['placement'] == 'Placement.right'):
-            current_right_foot = float(data['COP_y'])
+            current_right_foot = float(data['COP_y'])  
             
             # Calculate distance if there's a previous left foot
             if previous_right_foot:
                 nbr_of_sensor += abs(current_right_foot - previous_right_foot)
                 nbr_of_strides += 1
-                # ebreakpoint()
+                # breakpoint()
             # Update previous left foot
             previous_right_foot = current_right_foot
     # Avoid divition by zero
     if(nbr_of_strides != 0):
-        distance = (nbr_of_sensor + (nbr_of_sensor * 2) - 2) # sensor
+        distance = (nbr_of_sensor * SENSOR_RESOLUTION - 1) # Sensor Element Resolution 20 mm
         stride_length = distance / nbr_of_strides  
 
     return stride_length  
