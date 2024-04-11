@@ -12,6 +12,7 @@ WALKWAY_END_Y = 20
 WALKWAY_START_Y = 140
 WALKWAY_MID_X = 14
 
+
 def load_files(floor1_file_path, floor2_file_path, seat_file_path):
     floor1_df = pd.read_csv(floor1_file_path)
     floor2_df = pd.read_csv(floor2_file_path)
@@ -46,7 +47,6 @@ def on_prep(metrics, filepath_TED):
     # Check if person is still sitting based on the total pressure on the seat
     if(seat_total_pressure < THRESHOLD_SEAT):
         # Log event and transition to standing state
-        write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.start, None, None, None, None)
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.stand, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.stand
     # Still sitting, remain in preparation state
@@ -191,8 +191,9 @@ def run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED):
     next_state = Tug_State.prep
 
     timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
+    # Indicate start 
+    write_to_csv(filepath_TED, timestamp_list.iloc[0, 0], Tug_Event.start, None, None, None, None)
 
-    
     while index < len(timestamp_list):
         floor_frame = floor_array[index, :, :]
         seat_frame = seat_array[index, :, :] 

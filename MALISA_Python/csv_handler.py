@@ -77,7 +77,7 @@ def create_csv_sensor_data(filepath, rows, cols):
     with open(filepath, mode="w", newline="") as file:
         writer = csv.writer(file)
         # Write CSV header
-        csvHeader = ["timestamp"]
+        csvHeader = ["Timestamp"]
         for row in range(rows):
             for column in range(cols):
                 csvHeader.append("({row}-{column})".format(row=row, column=column))        

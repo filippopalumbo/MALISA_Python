@@ -35,11 +35,12 @@ from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
 
-WALKWAY_LENGTH = 6 # Originally 6,4 m but 20 cm (on each side of the walkway) are allocated for turning
+WALKWAY_LENGTH = 4.8 # Originally 6,4 m but 20 cm (on each side of the walkway) are allocated for turning
+SENSOR_RESOLUTION = 2 # Distance between sensors is 2 cm
 
 # TUG parameters
 def calc_tug_time(events):
-    start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
+    start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0]
     end = events.loc[events['event'] == 'Tug_Event.sit', 'timestamp'].iloc[0]
 
     # Special handling for the test-files (time are of str-type, not epoch-type)
@@ -52,8 +53,8 @@ def calc_tug_time(events):
     return tug_time
 
 def calc_stand_up_time(events):
-    stand_start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
-    stand_end = events.loc[events['event'] == 'Tug_Event.walk1', 'timestamp'].iloc[0]
+    stand_start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0]
+    stand_end = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
 
     # Special handling for the test-files (time are of str-type, not epoch-type)
     stand_start = str_to_epoch(stand_start)
@@ -123,12 +124,13 @@ def calc_walk_speed(events):
 def calc_stride_length(events):
     row = 0
     stride_length = 0
-    nbrOfStrides = 0
-    distance = 0
+    nbr_of_strides = 0
+    nbr_of_sensor = 0
     stride_data = []
     previous_left_foot = None
     previous_right_foot = None
     placement = None
+
 
     while row < len(events):
         i = row
@@ -163,8 +165,8 @@ def calc_stride_length(events):
             
             # Calculate distance if there's a previous left foot
             if previous_left_foot:
-                distance += abs(current_left_foot - previous_left_foot)
-                nbrOfStrides += 1
+                nbr_of_sensor += abs(current_left_foot - previous_left_foot)
+                nbr_of_strides += 1
             # Update previous left foot
             previous_left_foot = current_left_foot
 
@@ -173,14 +175,15 @@ def calc_stride_length(events):
             
             # Calculate distance if there's a previous left foot
             if previous_right_foot:
-                distance += abs(current_right_foot - previous_right_foot)
-                nbrOfStrides += 1
+                nbr_of_sensor += abs(current_right_foot - previous_right_foot)
+                nbr_of_strides += 1
                 # ebreakpoint()
             # Update previous left foot
             previous_right_foot = current_right_foot
     # Avoid divition by zero
-    if(nbrOfStrides != 0):
-        stride_length = distance / nbrOfStrides  
+    if(nbr_of_strides != 0):
+        distance = (nbr_of_sensor + (nbr_of_sensor * 2) - 2) # sensor
+        stride_length = distance / nbr_of_strides  
 
     return stride_length  
         
