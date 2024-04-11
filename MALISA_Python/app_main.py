@@ -23,7 +23,7 @@ def file_selector_sensor_data_seat(folder_path='./MALISA_Python/sensor_data'):
 
 def file_selector_tug_analysis(folder_path='./MALISA_Python/analyzed_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('Select analyzed file', filenames)
+    selected_filename = st.selectbox('Select file', filenames)
     return os.path.join(folder_path, selected_filename)
 
 def create_table(parameters):
