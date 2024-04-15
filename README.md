@@ -39,7 +39,7 @@ Ensure the existence of the following directories: "sensor_data", "processed_dat
 **Main App - TUG Analysis**:
   - Analyzes the raw data and sends out information about TUG and gait parameters linked to a TUG test.
 
-- **Visual Analysis App**:
+**Visual Analysis App**:
   - Allows for visual analysis of sensor data frames and associated metrics.
 
 ## Contributors
