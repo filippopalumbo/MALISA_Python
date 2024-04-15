@@ -55,7 +55,7 @@ def calc_tug_time(events):
 
 def calc_stand_up_time(events):
     stand_start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0]
-    stand_end = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0]
+    stand_end = events.loc[events['event'] == 'Tug_Event.walk1', 'timestamp'].iloc[0]
 
     # Special handling for the test-files (time are of str-type, not epoch-type)
     stand_start = str_to_epoch(stand_start)
@@ -66,7 +66,7 @@ def calc_stand_up_time(events):
     
     return stand_up_time 
 
-def calc_turn_between_walks_time(events):
+def calc_mid_turning(events):
     start = events.loc[events['event'] == 'Tug_Event.turn1', 'timestamp'].iloc[0]
     end = events.loc[events['event'] == 'Tug_Event.walk2', 'timestamp'].iloc[0]
 
@@ -79,7 +79,7 @@ def calc_turn_between_walks_time(events):
     
     return turn_time    
 
-def calc_turn_before_sit_time(events):
+def calc_end_turning_stand_to_sit(events):
     start = events.loc[events['event'] == 'Tug_Event.turn2', 'timestamp'].iloc[0]
     end = events.loc[events['event'] == 'Tug_Event.sit', 'timestamp'].iloc[0]
 
@@ -223,8 +223,8 @@ def calculate_parameters(filepath):
     parameters = {}
     parameters['tug_time'] = calc_tug_time(events_df)
     parameters['stand_up_time'] = calc_stand_up_time(events_df)
-    parameters['turn_between_walks_time'] = calc_turn_between_walks_time(events_df)
-    parameters['turn_before_sit_time'] = calc_turn_before_sit_time(events_df)
+    parameters['turn_between_walks_time'] = calc_mid_turning(events_df)
+    parameters['turn_before_sit_time'] = calc_end_turning_stand_to_sit(events_df)
     parameters['walk_speed'] = calc_walk_speed(events_df)
     parameters['stride_length'] = calc_stride_length(events_csv)
 

@@ -35,9 +35,9 @@ import csv_handler
 import sensor_SW.seating_mat as seating_mat
 import sensor_SW.fitness_mat as fitness_mat
 
-PORT_SEAT = ''    # /dev/tty.usbserial-1130
-PORT_FLOOR1 = ''   #'/dev/tty.usbmodem84214601' /dev/tty.usbmodem77024501
-PORT_FLOOR2 =  ''                           # /dev/tty.usbmodem84214601
+PORT_SEAT = ''     # /dev/tty.usbserial-11340
+PORT_FLOOR1 = ''   # /dev/tty.usbmodem77024501
+PORT_FLOOR2 =  ''  # /dev/tty.usbmodem84214601
 ROWS_SEAT = 20  
 COLS_SEAT = 20  
 ROWS_FLOOR = 80  
