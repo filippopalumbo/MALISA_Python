@@ -32,15 +32,16 @@ def create_table(parameters):
     turn_between_walks_time_seconds = parameters['turn_between_walks_time'].seconds + parameters['turn_between_walks_time'].microseconds/1000000
     turn_before_sit_time_seconds = parameters['turn_before_sit_time'].seconds + parameters['turn_before_sit_time'].microseconds/1000000
 
-    info = [('TUG time', 's', tug_time_seconds),
-            ('Stand up time', 's', stand_up_time_seconds),
-            ('Turn between walks time', 's', turn_between_walks_time_seconds),
-            ('Turn before sit time', 's', turn_before_sit_time_seconds),
-            ('Walk speed', 'm/s', parameters['walk_speed']),
-            ('Stride Length', 'cm', parameters['stride_length'])]
+    info = [('TUG time', tug_time_seconds, 's'),
+            ('Sit to Stand', stand_up_time_seconds, 's'),
+            ('Mid Turning', turn_between_walks_time_seconds, 's'),
+            ('End Turning Stand to Sit', turn_before_sit_time_seconds, 's'),
+            ('Walk speed', parameters['walk_speed'], 'm/s'),
+            ('Stride Length', parameters['stride_length'], 'cm')]
 
-    info = pd.DataFrame(info, columns=['Parameter', 'Unit' ,'Value'])
-    st.table(info)
+    info = pd.DataFrame(info, columns=['Parameter', 'Value' , 'Unit'])
+    info['Value'] = info['Value'].round(2)
+    st.dataframe(info)
 
 def load_files(floor1_file_path, floor2_file_path, seat_file_path):
     floor1_df = pd.read_csv(floor1_file_path)
