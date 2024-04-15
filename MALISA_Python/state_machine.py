@@ -3,6 +3,10 @@ from sensor_calculations import *
 from enumerations.tug_events import *
 from enumerations.tug_states import *
 from csv_handler import *
+import streamlit as st
+import plotly.graph_objects as go  
+from plotly.subplots import make_subplots
+
 
 # Thresholds
 THRESHOLD_SEAT = 3600
@@ -158,9 +162,11 @@ def on_turn_1(metrics, filepath_TED):
 # Second turn during TUG (turning to sit back down)
 def on_turn_2(metrics, filepath_TED):
     pressure_on_seat = metrics['seat_total_pressure']
+    event = get_csv_event(filepath_TED, 'Tug_Event.start')
+    THRESHOLD_SEAT_PERSONALIZED = float(event[0]['total_pressure'])
 
     # Check pressure on seat mat 
-    if(pressure_on_seat > THRESHOLD_SEAT):
+    if(pressure_on_seat > THRESHOLD_SEAT_PERSONALIZED):
         # Indicates that we are done turning and now sitting
         write_to_csv(filepath_TED, metrics['timestamp'],Tug_Event.sit, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.sit
@@ -192,7 +198,8 @@ def run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED):
 
     timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
     # Indicate start 
-    write_to_csv(filepath_TED, timestamp_list.iloc[0, 0], Tug_Event.start, None, None, None, None)
+    seat = seat_array[index, :, :] 
+    write_to_csv(filepath_TED, timestamp_list.iloc[0, 0], Tug_Event.start, None, None, None, calc_total_pressure(seat))
 
     while index < len(timestamp_list):
         floor_frame = floor_array[index, :, :]
@@ -233,98 +240,100 @@ def get_next_state(current_state, metrics, filepath_TED):
         case Tug_State.sit:
             return on_sit(metrics, filepath_TED)
 
-"""def get_file_paths(test):
+#TO RUN STATE MACHINE SEPERATLY, UNCOMMENT
 
-    if test == 'test 1':
-        file_path_mat1 = 'MALISA_Python/data/RC_tug1_floor1.csv'
-        file_path_mat2 = 'MALISA_Python/data/RC_tug1_floor2.csv'
-        file_path_seat = 'MALISA_Python/data/RC_tug1_seat.csv'
-    if test == 'test 2':
-        file_path_mat1 = 'MALISA_Python/data/RC_tug2_floor1.csv'
-        file_path_mat2 = 'MALISA_Python/data/RC_tug2_floor2.csv'
-        file_path_seat = 'MALISA_Python/data/RC_tug2_seat.csv'
-    if test == 'test 3':
-        file_path_mat1 = 'MALISA_Python/data/RC_tug3_floor1.csv'
-        file_path_mat2 = 'MALISA_Python/data/RC_tug3_floor2.csv'
-        file_path_seat = 'MALISA_Python/data/RC_tug3_seat.csv'
-    if test == 'test 4':
-        file_path_mat1 = 'MALISA_Python/data/RC_tug4_floor1.csv'
-        file_path_mat2 = 'MALISA_Python/data/RC_tug4_floor2.csv'
-        file_path_seat = 'MALISA_Python/data/RC_tug4_seat.csv'  
+# def get_file_paths(test):
 
-    return file_path_mat1, file_path_mat2, file_path_seat 
+#     if test == 'test 1':
+#         file_path_mat1 = 'MALISA_Python/processed_data/AS_01_floor1.csv'
+#         file_path_mat2 = 'MALISA_Python/processed_data/AS_01_floor2.csv'
+#         file_path_seat = 'MALISA_Python/processed_data/AS_01_seat.csv'
+#     # if test == 'test 2':
+#     #     file_path_mat1 = 'MALISA_Python/data/RC_tug2_floor1.csv'
+#     #     file_path_mat2 = 'MALISA_Python/data/RC_tug2_floor2.csv'
+#     #     file_path_seat = 'MALISA_Python/data/RC_tug2_seat.csv'
+#     # if test == 'test 3':
+#     #     file_path_mat1 = 'MALISA_Python/data/RC_tug3_floor1.csv'
+#     #     file_path_mat2 = 'MALISA_Python/data/RC_tug3_floor2.csv'
+#     #     file_path_seat = 'MALISA_Python/data/RC_tug3_seat.csv'
+#     # if test == 'test 4':
+#     #     file_path_mat1 = 'MALISA_Python/data/RC_tug4_floor1.csv'
+#     #     file_path_mat2 = 'MALISA_Python/data/RC_tug4_floor2.csv'
+#     #     file_path_seat = 'MALISA_Python/data/RC_tug4_seat.csv'  
 
-def create_heatmaps_and_plot(floor_frame, seat_frame):
-    # Create subplots for the walkway and seat 
-    fig = make_subplots(rows=2, cols=1, row_heights=[150, 1200])
+#     return file_path_mat1, file_path_mat2, file_path_seat 
 
-    # 12 bits gives a resolution of 4096 values, including 0 -> 4095
-    fig.add_trace(go.Heatmap(z=seat_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=1)
-    fig.add_trace(go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=2, col=1)
+# def create_heatmaps_and_plot(floor_frame, seat_frame):
+#     # Create subplots for the walkway and seat 
+#     fig = make_subplots(rows=2, cols=1, row_heights=[150, 1200])
 
-    # Update layout
-    fig.layout.height = 1350
-    fig.layout.width = 210
-    fig.update(layout_showlegend=False)
+#     # 12 bits gives a resolution of 4096 values, including 0 -> 4095
+#     fig.add_trace(go.Heatmap(z=seat_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=1, col=1)
+#     fig.add_trace(go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'), row=2, col=1)
 
-    # Show the plotly chart
-    st.plotly_chart(fig)
+#     # Update layout
+#     fig.layout.height = 1350
+#     fig.layout.width = 210
+#     fig.update(layout_showlegend=False)
 
-def plot_floor(floor_frame):
-    fig = go.Figure(data=go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'))
-    fig.update_layout(height=1600, width=280)  # Update layout properties
-    st.plotly_chart(fig)
+#     # Show the plotly chart
+#     st.plotly_chart(fig)
 
-def create_table(metrics):
-    info = [('timestamp', metrics['timestamp'][:21]), 
-            ('cop X', metrics['cop_x']), 
-            ('cop Y', metrics['cop_y']), 
-            ('seat total pressure', metrics['seat_total_pressure']), 
-            ('floor total pressure', metrics['total_pressure']), 
-            ('floor maximum pressure', metrics['max_pressure']), 
-            ('X maximum pressure', metrics['x_coord_max_pressure']),
-            ('Y maximum pressure', metrics['y_coord_max_pressure']),
-            ('Y distance', metrics['y_distance']), 
-            ('Y first coord', metrics['y_first_coord']), 
-            ('Y last coord', metrics['y_last_coord']), 
-            ('left side tot pressure', metrics['left_side_total_pressure']), 
-            ('right side tot pressure', metrics['right_side_total_pressure'])]
-    info = pd.DataFrame(info, columns=['Metric', 'Value'])
-    st.table(info)
+# def plot_floor(floor_frame):
+#     fig = go.Figure(data=go.Heatmap(z=floor_frame, zmin=0, zmax=4095, colorscale='Plasma'))
+#     fig.update_layout(height=1600, width=280)  # Update layout properties
+#     st.plotly_chart(fig)
 
-def main():
-    test = st.selectbox(label='Select TUG test', options=['test 1', 'test 2', 'test 3', 'test 4'])
+# def create_table(metrics):
+#     info = [('timestamp', metrics['timestamp'][:21]), 
+#             ('cop X', metrics['cop_x']), 
+#             ('cop Y', metrics['cop_y']), 
+#             ('seat total pressure', metrics['seat_total_pressure']), 
+#             ('floor total pressure', metrics['total_pressure']), 
+#             ('floor maximum pressure', metrics['max_pressure']), 
+#             ('X maximum pressure', metrics['x_coord_max_pressure']),
+#             ('Y maximum pressure', metrics['y_coord_max_pressure']),
+#             ('Y distance', metrics['y_distance']), 
+#             ('Y first coord', metrics['y_first_coord']), 
+#             ('Y last coord', metrics['y_last_coord']), 
+#             ('left side tot pressure', metrics['left_side_total_pressure']), 
+#             ('right side tot pressure', metrics['right_side_total_pressure'])]
+#     info = pd.DataFrame(info, columns=['Metric', 'Value'])
+#     st.table(info)
 
-    file_path_mat1, file_path_mat2, file_path_seat = get_file_paths(test)
+# def main():
+#     test = st.selectbox(label='Select TUG test', options=['test 1', 'test 2', 'test 3', 'test 4'])
 
-    # Load data for sensor floor mats
-    timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
+#     file_path_mat1, file_path_mat2, file_path_seat = get_file_paths(test)
 
-    # Create CSV file for test to save tug event data (TED) 
-    filepath_TED = create_filepath('RC', test)
-    create_csv_file(filepath_TED)
+#     # Load data for sensor floor mats
+#     timestamp_list, floor_array, seat_array = load_files(file_path_mat1, file_path_mat2, file_path_seat)
 
-    mode = st.selectbox(label='Select Mode', options=['Run Analysis', 'Visual Analysis'])
+#     # Create CSV file for test to save tug event data (TED) 
+#     filepath_TED = create_filepath('RC', test)
+#     create_csv_file(filepath_TED)
 
-    if mode == 'Run Analysis':
-        if st.button("RUN"):
-            run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
+#     mode = st.selectbox(label='Select Mode', options=['Run Analysis', 'Visual Analysis'])
 
-    if mode == 'Visual Analysis':
-        col1, col2 = st.columns([3, 2])  # Ratio of column widths
-        with col1:
-            index = st.slider('Choose frame', 0, len(timestamp_list)-1, key='frame_slider')
+#     if mode == 'Run Analysis':
+#         if st.button("RUN"):
+#             run_analysis(file_path_mat1, file_path_mat2, file_path_seat, filepath_TED)
 
-            floor_frame = floor_array[index, :, :]
-            seat_frame = seat_array[index, :, :] 
+#     if mode == 'Visual Analysis':
+#         col1, col2 = st.columns([3, 2])  # Ratio of column widths
+#         with col1:
+#             index = st.slider('Choose frame', 0, len(timestamp_list)-1, key='frame_slider')
 
-            # Create dictionary with metrics
-            metrics = calculate_metrics(floor_frame, seat_frame)
-            metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
+#             floor_frame = floor_array[index, :, :]
+#             seat_frame = seat_array[index, :, :] 
 
-            create_table(metrics)
-        with col2:
-            #create_heatmaps_and_plot(floor_frame, seat_frame)
-            plot_floor(floor_frame)
+#             # Create dictionary with metrics
+#             metrics = calculate_metrics(floor_frame, seat_frame)
+#             metrics['timestamp'] = timestamp_list.loc[index, 'timestamp']
 
-main()"""
+#             create_table(metrics)
+#         with col2:
+#             #create_heatmaps_and_plot(floor_frame, seat_frame)
+#             plot_floor(floor_frame)
+
+# main()

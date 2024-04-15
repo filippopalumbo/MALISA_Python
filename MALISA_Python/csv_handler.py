@@ -18,6 +18,8 @@ Date: [2024-03-27]
 import csv
 import os
 import uuid
+from enumerations.tug_events import *
+
 
 def create_unique_filepath(initials):
     #  This function generates a unique filepath for a CSV file based on the provided initials.
@@ -132,10 +134,9 @@ def get_csv_event(filepath, event):
 
     # Read data from CSV file
     with open(filepath, mode="r", newline="") as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Skip header row
+        reader = csv.DictReader(file)
         for row in reader:
-            if row[1] == event:  # Check if event matches
+            if row['event'] == event:  # Check if event matches
                 event_data.append(row)
 
     return event_data
@@ -161,3 +162,13 @@ def delete(filepath):
     if os.path.exists(filepath):
         # Delete the file
         os.remove(filepath)
+
+
+
+# def main():
+#     data= get_csv_event('MALISA_Python/analyzed_data/AS_01_analysis.csv', 'Tug_Event.start')
+#     for event in data:
+#         print(event)
+#         print("hej")
+
+# main()
