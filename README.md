@@ -10,18 +10,18 @@ This application is designed to analyze TUG (Timed Up and Go) test data collecte
      streamlit run MALISA_Python/app_sensor_data_collection.py
      ```
      For additional details and instructions, refer to the documentation within the file.
-       
-2. **Run Visual Analysis App**:
-   - Execute the following command in your terminal:
-     ```
-     streamlit run MALISA_Python/visual_analysis.py
-     ```
-     For additional details and instructions, refer to the documentation within the file.
      
-3. **Run Main App - TUG Analysis**
+2. **Run Main App - TUG Analysis**
    - Execute the following command in your terminal:
      ```
      streamlit run MALISA_Python/app_main.py
+     ```
+     For additional details and instructions, refer to the documentation within the file.
+
+3. **Run Visual Analysis App**:
+   - Execute the following command in your terminal:
+     ```
+     streamlit run MALISA_Python/app_visual_analysis.py
      ```
      For additional details and instructions, refer to the documentation within the file.
      
@@ -32,12 +32,14 @@ Ensure the existence of the following directories: "sensor_data", "processed_dat
 
 ## Features
 
-- **State Machine TUG Module**:
-  - Select Mode: Choose between "Run Analysis" and "Visual Analysis" modes.
-    - Run Analysis: Execute analysis algorithms on the selected TUG test data, and a CSV file will be generated.
-    - Visual Analysis: View individual sensor frames and associated metrics.
+**Sensor Data Collection App**:
+  - Collect raw data from two sensing mats and a sensing seat mat.
+    - Used for TUG data collection.
 
-- **Visual Analysis Module**:
+**Main App - TUG Analysis**:
+  - Analyzes the raw data and sends out information about TUG and gait parameters linked to a TUG test.
+
+- **Visual Analysis App**:
   - Allows for visual analysis of sensor data frames and associated metrics.
 
 ## Contributors
