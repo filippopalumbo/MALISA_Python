@@ -6,19 +6,36 @@ import streamlit as st
 import plotly.graph_objects as go  
 from plotly.subplots import make_subplots
 
+def filter_files(file_list, keyword):
+    """
+    Filter files containing the given keyword.
+    
+    Args:
+    - file_list (list): List of file paths.
+    - keyword (str): Keyword to filter files.
+    
+    Returns:
+    - filtered_files (list): List of filtered file paths.
+    """
+    filtered_files = [file for file in file_list if keyword in file]
+    return filtered_files
+
 def file_selector_sensor_data_floor_1(folder_path='./MALISA_Python/sensor_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('File Fitness Mat 1', filenames)
+    floor_1_files = filter_files(filenames, "floor1")
+    selected_filename = st.selectbox('File Fitness Mat 1', floor_1_files)
     return os.path.join(folder_path, selected_filename)
 
 def file_selector_sensor_data_floor_2(folder_path='./MALISA_Python/sensor_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('File Fitness Mat 2', filenames)
+    floor_2_files = filter_files(filenames, "floor2")
+    selected_filename = st.selectbox('File Fitness Mat 2', floor_2_files)
     return os.path.join(folder_path, selected_filename)
 
 def file_selector_sensor_data_seat(folder_path='./MALISA_Python/sensor_data'):
     filenames = os.listdir(folder_path)
-    selected_filename = st.selectbox('File Seat Mat', filenames)
+    seat_files = filter_files(filenames, "seat")
+    selected_filename = st.selectbox('File Seat Mat', seat_files)
     return os.path.join(folder_path, selected_filename)
 
 def file_selector_tug_analysis(folder_path='./MALISA_Python/analyzed_data'):
@@ -96,15 +113,14 @@ def main():
     # Main area
     if mode == 'Run Analysis':
         st.markdown('1. Select the files of the the test you want to run analysis on.')
-        st.markdown('2. Enter the initials of the subject and the id of the test.')
-        st.markdown('3. Press "RUN".')
+        st.markdown('2. Press "RUN".')
 
         file_floor_1 = file_selector_sensor_data_floor_1()
         file_floor_2 = file_selector_sensor_data_floor_2()
         file_seat = file_selector_sensor_data_seat()
-
-        initials = st.text_input('Initials', '')
-        test_id = st.text_input('Id', '')
+        
+        filename = os.path.basename(file_floor_1) 
+        initials, test_id, _ = filename.split('_')
 
         if st.button('RUN'):
             # Save files with identical names in the processed data folder
@@ -113,21 +129,23 @@ def main():
             tug_analysis_filepath = create_filepath(initials, test_id)
             create_csv_file(tug_analysis_filepath)
 
-            # When testing on raw data, update the filepath to the processed file
             run_analysis(f'MALISA_Python/processed_data/{initials}_{test_id}_floor1.csv', f'MALISA_Python/processed_data/{initials}_{test_id}_floor2.csv', f'MALISA_Python/processed_data/{initials}_{test_id}_seat.csv', tug_analysis_filepath)
 
     else:
         st.markdown('1. Select the file of the the test you want view the results of.')
-        st.markdown('2. Enter the initials of the patient and the id of the test.')
-        st.markdown('3. Choose wether to view results and/or see the recording.')
-        filename = file_selector_tug_analysis()
-        initials = st.text_input('Initials', '')
-        test_id = st.text_input('Id', '')
+        st.markdown('2. Choose wether to view results and/or play the test back.')
+        
+        filepath = file_selector_tug_analysis()
+        
+        filename = os.path.basename(filepath) 
+        
+        initials, test_id, _ = filename.split('_')
+
         results = st.checkbox('Results')
         visuals = st.checkbox('Visual Playback')
 
         if results:
-            parameters = calculate_parameters(filename)
+            parameters = calculate_parameters(filepath)
             create_table(parameters)
 
         if visuals:
