@@ -274,8 +274,8 @@ def main():
         event.clear() # Unset the event
 
         # Prompt the user to enter a new file name and the number of current test
-        initials = st.text_input('Enter new file name:', value="Initials ")
-        test = st.text_input('Enter new test number:', value="Number ")
+        initials = st.text_input('Enter new file name:', value="Initials ").strip()
+        test = st.text_input('Enter new test number:', value="Number ").strip()
         
         # Wait for the user to click the submit button
         if st.session_state.submit_button_flag:

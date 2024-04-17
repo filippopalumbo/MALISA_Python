@@ -122,16 +122,68 @@ def calc_walk_speed(events):
 
     return walk_speed
 
+def reevaluate_foot_positioning(events):
+    size = len(events)
+    row = 0
+    last_foot_sequence = events[0]
+
+    while row < size:
+
+        if Tug_Event(events[row]['event']) == Tug_Event.foot:
+            event_nbr = row
+            counter = 0
+            while Tug_Event(events[event_nbr]['event']) == Tug_Event.foot:
+                previous_event = events[event_nbr-1] 
+                next_event = events[event_nbr+1] 
+                # First foot
+                # breakpoint()
+
+                if events[event_nbr]['placement'] == last_foot_sequence['placement'] and last_foot_sequence != 'Tug_Event.start' and last_foot_sequence != 'Tug_Event.walk2':
+                    if Placement(last_foot_sequence['placement']) == Placement.right:
+                        events[event_nbr]['placement'] = Placement.left       # Change placement 
+                    else:
+                        events[event_nbr]['placement'] = Placement.right
+                
+                # Last foot
+                if Tug_Event(next_event['event']) != Tug_Event.foot:
+                    if previous_event['placement'] != events[event_nbr]['placement']:  
+                        placement = events[event_nbr]['placement']
+                        events[event_nbr]['placement'] = placement  
+                    last_foot_sequence = events[event_nbr]
+
+                # In between foot
+                elif previous_event['event'] == Tug_Event.foot:  
+                    if previous_event['placement'] != events[event_nbr]['placement']:  
+                        placement = events[event_nbr]['placement']
+                        events[event_nbr]['placement'] = placement  
+
+                counter += 1
+                event_nbr += 1
+            row += counter
+        
+        elif Tug_Event(events[row]['event']) == Tug_Event.walk2:
+            last_foot_sequence = events[row]
+            row += 1
+
+        else:
+            row += 1
+    return events
+
+
 def calc_stride_length(events):
     row = 0
-    stride_length = 0
+    stride_length_mean = 0
+    one_stride_length = 0
     nbr_of_strides = 0
-    nbr_of_sensor = 0
+    nbr_of_sensor_tot = 0
     stride_data = []
+    strides = []
     previous_left_foot = None
     previous_right_foot = None
     placement = None
-
+    
+    # Rectify misaligned foot positioning 
+    events = reevaluate_foot_positioning(events)
 
     while row < len(events):
         i = row
@@ -140,20 +192,20 @@ def calc_stride_length(events):
         # Save info about walk2 as an inticator for change
         if (Tug_Event(events[row]['event']) == Tug_Event.walk2):
             stride_data.append(events[row])
-
+            
         placement = events[row]['placement']
-        
+
         # Find and save the foot with the highest pressure in the same subsequence
-        while (i < len(events) and Tug_Event(events[i]['event']) == Tug_Event.foot and events[i]['placement'] == placement ): #and Placement(events[i]['placement']) == placement 
+        while (i < len(events) and Tug_Event(events[i]['event']) == Tug_Event.foot and events[i]['placement'] == placement ):
             foot_data.append(events[i])
             i += 1
-
+        
         if (len(foot_data) > 0):
             stride_data.append(save_highest_pressure(foot_data))
             row += len(foot_data) # Skip the next foot events, they have been taken into account above.
         else:
             row += 1
-
+        
     # Iterate through the foot data
     for data in stride_data:
 
@@ -166,27 +218,44 @@ def calc_stride_length(events):
             
             # Calculate distance if there's a previous left foot
             if previous_left_foot:
-                nbr_of_sensor += abs(current_left_foot - previous_left_foot)
-                nbr_of_strides += 1
+                nbr_of_sensors = abs(current_left_foot - previous_left_foot)
+                nbr_of_sensor_tot += nbr_of_sensors
+                
+                if nbr_of_sensors > 0:
+                    strides.append(abs(current_left_foot - previous_left_foot))
+                    nbr_of_strides += 1
+                
             # Update previous left foot
             previous_left_foot = current_left_foot
-
+            
         elif (data['placement'] == 'Placement.right'):
             current_right_foot = float(data['COP_y'])  
             
             # Calculate distance if there's a previous left foot
             if previous_right_foot:
-                nbr_of_sensor += abs(current_right_foot - previous_right_foot)
-                nbr_of_strides += 1
-                # breakpoint()
+                nbr_of_sensors = abs(current_right_foot - previous_right_foot)
+                nbr_of_sensor_tot += nbr_of_sensors
+        
+                if nbr_of_sensors > 0:
+                    strides.append(abs(current_right_foot - previous_right_foot))
+                    nbr_of_strides += 1
+                
             # Update previous left foot
             previous_right_foot = current_right_foot
+   
     # Avoid divition by zero
     if(nbr_of_strides != 0):
-        distance = (nbr_of_sensor * SENSOR_RESOLUTION - 1) # Sensor Element Resolution 20 mm
-        stride_length = distance / nbr_of_strides  
+        # Calc mean
+        distance = (nbr_of_sensor_tot * SENSOR_RESOLUTION - 1) # Sensor Element Resolution 20 mm
+        stride_length_mean = distance / nbr_of_strides  
 
-    return stride_length  
+        if (nbr_of_strides > 1):    
+            # Calc one stride
+            one_stride_length = (strides[1] * SENSOR_RESOLUTION - 1) # take out the second stride
+        else:
+            one_stride_length = (strides[0] * SENSOR_RESOLUTION - 1) # take out the first stride
+
+    return stride_length_mean, one_stride_length  
         
 
 ## ON HOLD (Inaccurate with heels and toes...)
@@ -226,7 +295,9 @@ def calculate_parameters(filepath):
     parameters['turn_between_walks_time'] = calc_mid_turning(events_df)
     parameters['turn_before_sit_time'] = calc_end_turning_stand_to_sit(events_df)
     parameters['walk_speed'] = calc_walk_speed(events_df)
-    parameters['stride_length'] = calc_stride_length(events_csv)
+    mean_stride, one_stride = calc_stride_length(events_csv)
+    parameters['mean_stride_length'] = mean_stride
+    parameters['one_stride_length'] = one_stride
 
     return parameters
 
@@ -248,3 +319,12 @@ def calculate_parameters(filepath):
     print('stride length: ' + str(stride_length))
 
 main()"""
+
+# def main():
+#     events_csv = read_csv_data('MALISA_Python/analyzed_data/HE_01_analysis.csv')
+#     events = reevaluate_foot_positioning(events_csv)
+
+#     write_csv_from_dict('MALISA_Python/analyzed_data/test1.csv', events)
+    
+
+# main()
