@@ -32,7 +32,8 @@ def create_table(parameters):
             ('Mid Turning', turn_between_walks_time_seconds, 's'),
             ('End Turning Stand to Sit', turn_before_sit_time_seconds, 's'),
             ('Walk speed', parameters['walk_speed'], 'm/s'),
-            ('Stride Length', parameters['stride_length'], 'cm')]
+            ('Mean Stride Length', parameters['mean_stride_length'], 'cm'),
+            ('One Stride Length', parameters['one_stride_length'], 'cm')]
 
     table = pd.DataFrame(table, columns=['Parameter', 'Value' , 'Unit'])
     table['Value'] = table['Value'].round(2)
