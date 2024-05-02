@@ -16,9 +16,13 @@ This application is designed to analyze TUG (Timed Up and Go) test data collecte
      ```
      streamlit run MALISA_Python/app_main.py
      ```
+     or
+     ```
+     python -m streamlit run MALISA_Python\app_main.py
+     ```
      For additional details and instructions, refer to the documentation within the file.
 
-3. **Run Visual Analysis App**:
+4. **Run Visual Analysis App**:
    - Execute the following command in your terminal:
      ```
      streamlit run MALISA_Python/app_visual_analysis.py
