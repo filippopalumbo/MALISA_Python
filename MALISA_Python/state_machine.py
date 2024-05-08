@@ -46,10 +46,14 @@ def load_files(floor1_file_path, floor2_file_path, seat_file_path):
     return timestamp_list, floor_array, seat_array
 
 def on_prep(metrics, filepath_TED):
+    pressure_on_seat = metrics['seat_total_pressure']
     seat_total_pressure = metrics['seat_total_pressure']
+    event = get_csv_event(filepath_TED, 'Tug_Event.start')
+    THRESHOLD_SEAT_PERSONALIZED = float(event[0]['total_pressure'])
+
     
     # Check if person is still sitting based on the total pressure on the seat
-    if(seat_total_pressure < THRESHOLD_SEAT):
+    if(pressure_on_seat < THRESHOLD_SEAT_PERSONALIZED):
         # Log event and transition to standing state
         write_to_csv(filepath_TED, metrics['timestamp'], Tug_Event.stand, None, metrics['cop_x'], metrics['cop_y'], metrics['total_pressure'])
         return Tug_State.stand

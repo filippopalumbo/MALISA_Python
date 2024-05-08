@@ -41,7 +41,8 @@ SENSOR_RESOLUTION = 2   # Sensor element resolution is 20 mm (calculating lenght
 
 # TUG parameters
 def calc_tug_time(events):
-    start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0]
+    start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0] # Algorithm 2 - TUG-time initilaizes on start button (for Observed validation)
+    #start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0] # Algorithm 1 - TUG-time initializes depending on threshold on seating mat (for GWALK validation)
     end = events.loc[events['event'] == 'Tug_Event.sit', 'timestamp'].iloc[0]
 
     # Special handling for the test-files (time are of str-type, not epoch-type)
@@ -53,8 +54,9 @@ def calc_tug_time(events):
     
     return tug_time
 
-def calc_stand_up_time(events):
-    stand_start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0]
+def calc_sit_to_stand(events):
+    stand_start = events.loc[events['event'] == 'Tug_Event.start', 'timestamp'].iloc[0] # Algorithm 2
+    #stand_start = events.loc[events['event'] == 'Tug_Event.stand', 'timestamp'].iloc[0] # Algorithm 1
     stand_end = events.loc[events['event'] == 'Tug_Event.walk1', 'timestamp'].iloc[0]
 
     # Special handling for the test-files (time are of str-type, not epoch-type)
@@ -140,9 +142,9 @@ def reevaluate_foot_positioning(events):
 
                 if events[event_nbr]['placement'] == last_foot_sequence['placement'] and last_foot_sequence != 'Tug_Event.start' and last_foot_sequence != 'Tug_Event.walk2':
                     if Placement(last_foot_sequence['placement']) == Placement.right:
-                        events[event_nbr]['placement'] = Placement.left       # Change placement 
+                        events[event_nbr]['placement'] = 'Placement.left'       # Change placement 
                     else:
-                        events[event_nbr]['placement'] = Placement.right
+                        events[event_nbr]['placement'] = 'Placement.right'
                 
                 # Last foot
                 if Tug_Event(next_event['event']) != Tug_Event.foot:
@@ -181,6 +183,7 @@ def calc_stride_length(events):
     previous_left_foot = None
     previous_right_foot = None
     placement = None
+    timeframe = []
     
     # Rectify misaligned foot positioning 
     events = reevaluate_foot_positioning(events)
@@ -224,6 +227,7 @@ def calc_stride_length(events):
                 if nbr_of_sensors > 0:
                     strides.append(abs(current_left_foot - previous_left_foot))
                     nbr_of_strides += 1
+                    timeframe.append(data)
                 
             # Update previous left foot
             previous_left_foot = current_left_foot
@@ -239,6 +243,7 @@ def calc_stride_length(events):
                 if nbr_of_sensors > 0:
                     strides.append(abs(current_right_foot - previous_right_foot))
                     nbr_of_strides += 1
+                    timeframe.append(data)
                 
             # Update previous left foot
             previous_right_foot = current_right_foot
@@ -248,11 +253,14 @@ def calc_stride_length(events):
         # Calc mean
         distance = (nbr_of_sensor_tot * SENSOR_RESOLUTION - 1) # Sensor Element Resolution 20 mm
         stride_length_mean = distance / nbr_of_strides  
-
+        for st in strides:
+            print(st)
         if (nbr_of_strides > 1):    
             # Calc one stride
+            print(timeframe[1])
             one_stride_length = (strides[1] * SENSOR_RESOLUTION - 1) # take out the second stride
         else:
+            print(timeframe[0])
             one_stride_length = (strides[0] * SENSOR_RESOLUTION - 1) # take out the first stride
 
     return stride_length_mean, one_stride_length  
@@ -291,7 +299,7 @@ def calculate_parameters(filepath):
     events_csv = read_csv_data(filepath)
     parameters = {}
     parameters['tug_time'] = calc_tug_time(events_df)
-    parameters['stand_up_time'] = calc_stand_up_time(events_df)
+    parameters['stand_up_time'] = calc_sit_to_stand(events_df)
     parameters['turn_between_walks_time'] = calc_mid_turning(events_df)
     parameters['turn_before_sit_time'] = calc_end_turning_stand_to_sit(events_df)
     parameters['walk_speed'] = calc_walk_speed(events_df)
