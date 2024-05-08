@@ -1,6 +1,6 @@
 timestamp,event,placement,COP_x,COP_y,total_pressure
 2024-04-12 14:46:20.900000+02:00,Tug_Event.start,,,,38414.0
-2024-04-12 14:46:22+02:00,Tug_Event.stand,,12,155,45389.0
+2024-04-12 14:46:21.300000+02:00,Tug_Event.stand,,12,152,23329.0
 2024-04-12 14:46:24.300000+02:00,Tug_Event.walk1,,13,144,44460.0
 2024-04-12 14:46:24.400000+02:00,Tug_Event.foot,Placement.right,12,142,41787.0
 2024-04-12 14:46:24.500000+02:00,Tug_Event.foot,Placement.right,11,141,36881.0
